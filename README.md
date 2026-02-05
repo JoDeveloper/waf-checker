@@ -9,12 +9,10 @@
   <a href="#"><img src="https://readme-typing-svg.herokuapp.com?center=true&vCenter=true&lines=WAF-CHECKER.COM;"></a>
 </p>
 <div align="center">
-A command-line tool to easily manage and connect to machines via the Wallix bastion from terminal.
-</br>Use with : https://www.wallix.com/
+A powerful web application to test how well your **Web Application Firewall (WAF)** protects against common attack vectors.
 </div>
 
 
-A powerful web application to test how well your **Web Application Firewall (WAF)** protects against common attack vectors. Built as a Cloudflare Worker with a modern cyberpunk-themed UI.
 
 > Live instance: [waf-checker.com](https://waf-checker.com)
 
