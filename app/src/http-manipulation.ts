@@ -367,7 +367,10 @@ export class HTTPManipulator {
         responseTime,
         headers: responseHeaders,
         technique: request.technique,
-        description: request.description
+        description: request.description,
+        method: request.method,
+        testType: request.technique,
+        bypassed: response.status >= 200 && response.status < 300 && response.status !== 403
       };
 
     } catch (error) {
@@ -377,7 +380,10 @@ export class HTTPManipulator {
         responseTime,
         headers: {},
         technique: request.technique,
-        description: request.description
+        description: request.description,
+        method: request.method,
+        testType: request.technique,
+        bypassed: false
       };
     }
   }

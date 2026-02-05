@@ -4,6 +4,235 @@ function escapeHtml(str) {
 	return div.innerHTML;
 }
 
+// ===========================================
+// URL NORMALIZATION
+// ===========================================
+
+/**
+ * Normalize URL by adding https:// scheme if missing
+ * @param {string} url - The URL to normalize
+ * @returns {string} - The normalized URL with scheme
+ */
+function normalizeUrl(url) {
+	if (!url || typeof url !== 'string') {
+		return url;
+	}
+	
+	const trimmedUrl = url.trim();
+	if (!trimmedUrl) {
+		return trimmedUrl;
+	}
+	
+	// Check if URL already has a scheme (http://, https://, ftp://, etc.)
+	if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(trimmedUrl)) {
+		return trimmedUrl;
+	}
+	
+	// Add https:// if no scheme is present
+	return `https://${trimmedUrl}`;
+}
+
+// ===========================================
+// CUSTOM ALERT & CONFIRM DIALOGS
+// ===========================================
+
+let confirmResolve = null;
+
+function showAlert(message, title = 'Information', type = 'info') {
+	const modal = document.getElementById('customAlertModal');
+	const titleEl = document.getElementById('alertTitle');
+	const messageEl = document.getElementById('alertMessage');
+	const iconEl = document.getElementById('alertIcon');
+	
+	titleEl.textContent = title;
+	messageEl.textContent = message;
+	
+	// Set icon based on type
+	let iconSvg = '';
+	let iconClass = '';
+	switch (type) {
+		case 'success':
+			iconClass = 'bg-cyber-success/20';
+			iconSvg = '<svg class="w-5 h-5 text-cyber-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+			break;
+		case 'error':
+			iconClass = 'bg-cyber-danger/20';
+			iconSvg = '<svg class="w-5 h-5 text-cyber-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+			break;
+		case 'warning':
+			iconClass = 'bg-cyber-warning/20';
+			iconSvg = '<svg class="w-5 h-5 text-cyber-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+			break;
+		default:
+			iconClass = 'bg-cyber-accent/20';
+			iconSvg = '<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+	}
+	
+	iconEl.className = `w-10 h-10 rounded-lg flex items-center justify-center ${iconClass}`;
+	iconEl.innerHTML = iconSvg;
+	
+	modal.style.display = 'flex';
+	document.body.style.overflow = 'hidden';
+}
+
+function closeAlert() {
+	const modal = document.getElementById('customAlertModal');
+	modal.style.display = 'none';
+	document.body.style.overflow = '';
+}
+
+function showConfirm(message, title = 'Confirm', type = 'warning') {
+	return new Promise((resolve) => {
+		confirmResolve = resolve;
+		
+		const modal = document.getElementById('customConfirmModal');
+		const titleEl = document.getElementById('confirmTitle');
+		const messageEl = document.getElementById('confirmMessage');
+		const iconEl = document.getElementById('confirmIcon');
+		const okBtn = document.getElementById('confirmOkBtn');
+		
+		titleEl.textContent = title;
+		messageEl.textContent = message;
+		
+		// Set icon and button based on type
+		let iconSvg = '';
+		let iconClass = '';
+		let btnClass = '';
+		switch (type) {
+			case 'danger':
+				iconClass = 'bg-cyber-danger/20';
+				iconSvg = '<svg class="w-5 h-5 text-cyber-danger" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+				btnClass = 'bg-cyber-danger text-white';
+				break;
+			case 'warning':
+				iconClass = 'bg-cyber-warning/20';
+				iconSvg = '<svg class="w-5 h-5 text-cyber-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+				btnClass = 'bg-cyber-warning text-cyber-bg';
+				break;
+			default:
+				iconClass = 'bg-cyber-accent/20';
+				iconSvg = '<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+				btnClass = 'bg-cyber-accent text-cyber-bg';
+		}
+		
+		iconEl.className = `w-10 h-10 rounded-lg flex items-center justify-center ${iconClass}`;
+		iconEl.innerHTML = iconSvg;
+		okBtn.className = `px-4 py-2 font-semibold rounded-lg hover:opacity-90 transition-all text-sm ${btnClass}`;
+		
+		modal.style.display = 'flex';
+		document.body.style.overflow = 'hidden';
+	});
+}
+
+function closeConfirm(result) {
+	const modal = document.getElementById('customConfirmModal');
+	modal.style.display = 'none';
+	document.body.style.overflow = '';
+	
+	if (confirmResolve) {
+		confirmResolve(result);
+		confirmResolve = null;
+	}
+}
+
+// ===========================================
+// HTTP STATUS CODES MODAL
+// ===========================================
+
+function generateHttpCodesTable(context = 'normal') {
+	const codes = [
+		{ code: '200', name: 'OK', normal: 'Request succeeded - <strong class="text-cyber-danger">VULNERABLE</strong> (attack passed)', falsePositive: '<strong class="text-cyber-success">GOOD</strong> - Legitimate request allowed', httpManip: '<strong class="text-cyber-danger">BYPASS</strong> - Manipulation succeeded, WAF did not block', bg: 'bg-cyber-danger/5' },
+		{ code: '201', name: 'Created', normal: 'Resource created - <strong class="text-cyber-danger">VULNERABLE</strong>', falsePositive: '<strong class="text-cyber-success">GOOD</strong> - Resource created successfully', httpManip: 'Resource created - <strong class="text-cyber-danger">BYPASS</strong>', bg: 'bg-cyber-danger/5' },
+		{ code: '204', name: 'No Content', normal: 'Success with no content - <strong class="text-cyber-danger">VULNERABLE</strong>', falsePositive: '<strong class="text-cyber-success">GOOD</strong> - Request processed successfully', httpManip: 'Success with no content - <strong class="text-cyber-danger">BYPASS</strong>', bg: 'bg-cyber-danger/5' },
+		{ code: '301', name: 'Moved Permanently', normal: 'Permanent redirect - Check if WAF block page or normal redirect', falsePositive: 'Permanent redirect - Check if legitimate or WAF block', httpManip: 'Permanent redirect - Check if WAF block page or normal redirect', bg: 'bg-orange-500/5' },
+		{ code: '302', name: 'Found', normal: 'Temporary redirect - Check Location header for block page', falsePositive: 'Temporary redirect - Investigate if unnecessary', httpManip: 'Temporary redirect - May indicate WAF redirecting to block page', bg: 'bg-orange-500/5' },
+		{ code: '307', name: 'Temporary Redirect', normal: 'Temporary redirect (method preserved) - Investigate', falsePositive: 'Temporary redirect - May be normal or WAF-related', httpManip: 'Temporary redirect (method preserved) - Investigate', bg: 'bg-orange-500/5' },
+		{ code: '308', name: 'Permanent Redirect', normal: 'Permanent redirect (method preserved) - Investigate', falsePositive: 'Permanent redirect - Investigate', httpManip: 'Permanent redirect (method preserved) - Investigate', bg: 'bg-orange-500/5' },
+		{ code: '403', name: 'Forbidden', normal: '<strong class="text-cyber-success">PROTECTED</strong> - WAF blocked the attack', falsePositive: '<strong class="text-cyber-danger">FALSE POSITIVE</strong> - Legitimate request blocked', httpManip: '<strong class="text-cyber-success">PROTECTED</strong> - WAF detected and blocked the manipulation', bg: 'bg-cyber-success/5' },
+		{ code: '404', name: 'Not Found', normal: 'Resource not found - May indicate WAF blocking or normal 404', falsePositive: 'Resource not found - May be normal or WAF blocking', httpManip: 'Resource not found - May indicate WAF blocking', bg: 'bg-orange-500/5' },
+		{ code: '405', name: 'Method Not Allowed', normal: 'HTTP method not allowed - May indicate protection', falsePositive: 'HTTP method not allowed - May indicate over-protection', httpManip: 'HTTP method not allowed - May indicate protection', bg: 'bg-orange-500/5' },
+		{ code: '406', name: 'Not Acceptable', normal: 'Server cannot produce acceptable response - Often WAF-related', falsePositive: 'Server cannot produce acceptable response - Often WAF-related', httpManip: 'Server cannot produce acceptable response - Often WAF-related', bg: 'bg-orange-500/5' },
+		{ code: '429', name: 'Too Many Requests', normal: 'Rate limiting - WAF may be throttling requests', falsePositive: 'Rate limiting - May be too aggressive for legitimate traffic', httpManip: 'Rate limiting - WAF may be throttling manipulation attempts', bg: 'bg-orange-500/5' },
+		{ code: '500', name: 'Internal Server Error', normal: 'Server error - May indicate WAF blocking or application error', falsePositive: 'Server error - May indicate WAF blocking or application issue', httpManip: 'Server error - May indicate WAF blocking or application error', bg: 'bg-orange-500/5' },
+		{ code: '502', name: 'Bad Gateway', normal: 'Gateway error - Network or WAF infrastructure issue', falsePositive: 'Gateway error - Network or infrastructure issue', httpManip: 'Gateway error - Network or infrastructure issue', bg: 'bg-orange-500/5' },
+		{ code: '503', name: 'Service Unavailable', normal: 'Service unavailable - May indicate WAF blocking or maintenance', falsePositive: 'Service unavailable - May indicate WAF blocking or maintenance', httpManip: 'Service unavailable - May indicate WAF blocking or maintenance', bg: 'bg-orange-500/5' },
+		{ code: 'ERR', name: 'Error', normal: 'Network/connection error - Request failed to complete', falsePositive: 'Network/connection error - Request failed to complete', httpManip: 'Network/connection error - Request failed to complete', bg: 'bg-orange-500/5' },
+	];
+
+	const contextLabels = {
+		normal: 'WAF Context',
+		falsePositive: 'False Positive Context',
+		httpManip: 'HTTP Manipulation Context'
+	};
+
+	let html = `<table class="w-full text-xs border-collapse">
+		<thead>
+			<tr class="bg-cyber-elevated/50">
+				<th class="px-3 py-2 text-left border border-cyber-accent/20 text-gray-300 font-bold">Code</th>
+				<th class="px-3 py-2 text-left border border-cyber-accent/20 text-gray-300 font-bold">Name</th>
+				<th class="px-3 py-2 text-left border border-cyber-accent/20 text-gray-300 font-bold">Meaning (${contextLabels[context] || contextLabels.normal})</th>
+			</tr>
+		</thead>
+		<tbody class="text-gray-400">`;
+
+	codes.forEach((item) => {
+		const meaning = item[context] || item.normal;
+		const codeColor = item.code === '403' ? 'text-cyber-success' : 
+		                 (item.code === '200' || item.code === '201' || item.code === '204') ? 'text-cyber-danger' : 
+		                 'text-orange-400';
+		
+		html += `<tr class="${item.bg}">
+			<td class="px-3 py-2 border border-cyber-accent/20 font-mono font-bold ${codeColor}">${item.code}</td>
+			<td class="px-3 py-2 border border-cyber-accent/20">${item.name}</td>
+			<td class="px-3 py-2 border border-cyber-accent/20">${meaning}</td>
+		</tr>`;
+	});
+
+	html += `</tbody></table>`;
+	return html;
+}
+
+function showHttpCodesModal(context = 'normal') {
+	const modal = document.getElementById('httpCodesModal');
+	const titleEl = document.getElementById('httpCodesTitle');
+	const contentEl = document.getElementById('httpCodesTableContent');
+	
+	const contextTitles = {
+		normal: 'HTTP Status Codes Reference - Security Test',
+		falsePositive: 'HTTP Status Codes Reference - False Positive Test',
+		httpManip: 'HTTP Status Codes Reference - HTTP Manipulation Test'
+	};
+	
+	titleEl.textContent = contextTitles[context] || contextTitles.normal;
+	contentEl.innerHTML = generateHttpCodesTable(context);
+	
+	modal.style.display = 'flex';
+	document.body.style.overflow = 'hidden';
+}
+
+function closeHttpCodesModal() {
+	const modal = document.getElementById('httpCodesModal');
+	modal.style.display = 'none';
+	document.body.style.overflow = '';
+}
+
+// Handle Escape key for modals
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape') {
+		const alertModal = document.getElementById('customAlertModal');
+		const confirmModal = document.getElementById('customConfirmModal');
+		
+		if (alertModal && alertModal.style.display === 'flex') {
+			closeAlert();
+		}
+		if (confirmModal && confirmModal.style.display === 'flex') {
+			closeConfirm(false);
+		}
+	}
+});
+
+// ===========================================
+
 function getStatusClass(status, is_redirect, falsePositiveMode = false) {
 	const codeNum = parseInt(status, 10);
 	if (!isNaN(codeNum) && (is_redirect || codeNum === 405)) return 'status-redirect';
@@ -27,75 +256,266 @@ function renderSummary(results, falsePositiveMode = false) {
 	const statusCounter = {};
 	for (const r of results) statusCounter[r.status] = (statusCounter[r.status] || 0) + 1;
 	const totalRequests = results.length;
-	let html = `<div class='mb-3'>`;
-	html += `<div class='d-flex align-items-left mb-1'><div class='min-width-112'><label><input type='checkbox' id='statusSelectAll' checked class='checkbox-align'> <b>Total</b></label></div><div class='status-bar status-bar-total'>${totalRequests}</div></div>`;
+	
+	let html = `<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-4 mb-4">
+		<div class="flex items-center justify-between mb-3">
+			<h4 class="text-sm font-bold text-white uppercase tracking-wider">Results Summary</h4>
+			<span class="text-xs text-gray-400">${totalRequests} total tests</span>
+		</div>
+		<div class="space-y-2">
+			<label class="flex items-center gap-3 p-2 bg-cyber-elevated/50 rounded-lg cursor-pointer hover:bg-cyber-elevated transition-colors">
+				<input type="checkbox" id="statusSelectAll" checked class="w-4 h-4 accent-cyber-accent shrink-0" />
+				<span class="text-sm font-semibold text-white flex-1">All Results</span>
+				<span class="px-2 py-0.5 bg-cyber-accent/20 text-cyber-accent text-xs font-bold rounded">${totalRequests}</span>
+			</label>`;
+	
 	for (const code of Object.keys(statusCounter).sort()) {
 		const percent = totalRequests ? (statusCounter[code] / totalRequests) * 100 : 0;
-		const status_class = getStatusClass(code, parseInt(code, 10) >= 300 && parseInt(code, 10) < 400, falsePositiveMode);
-		html += `<div class='d-flex align-items-left mb-1'><div class='min-width-112'><label><input type='checkbox' class='status-filter-checkbox checkbox-align' data-status='${code}' checked> <b>Status ${code}</b></label></div><div class='status-bar ${status_class}' style='width:${percent.toFixed(2)}%;'>${statusCounter[code]}</div></div>`;
+		const codeNum = parseInt(code, 10);
+		let colorClass = 'bg-gray-500';
+		let textClass = 'text-gray-400';
+		
+		if (falsePositiveMode) {
+			if (codeNum >= 200 && codeNum < 300) { colorClass = 'bg-cyber-success'; textClass = 'text-cyber-success'; }
+			else if (codeNum === 403) { colorClass = 'bg-cyber-danger'; textClass = 'text-cyber-danger'; }
+			else if (codeNum >= 400 && codeNum < 500) { colorClass = 'bg-cyber-warning'; textClass = 'text-cyber-warning'; }
+		} else {
+			if (codeNum === 403) { colorClass = 'bg-cyber-success'; textClass = 'text-cyber-success'; }
+			else if (codeNum >= 200 && codeNum < 300) { colorClass = 'bg-cyber-danger'; textClass = 'text-cyber-danger'; }
+			else if (codeNum >= 400 && codeNum < 500) { colorClass = 'bg-cyber-warning'; textClass = 'text-cyber-warning'; }
+		}
+		
+		html += `
+			<label class="flex items-center gap-3 p-2 bg-cyber-elevated/30 rounded-lg cursor-pointer hover:bg-cyber-elevated/50 transition-colors">
+				<input type="checkbox" class="status-filter-checkbox w-4 h-4 accent-cyber-accent shrink-0" data-status="${code}" checked />
+				<span class="text-sm text-gray-300 flex-1">Status ${code}</span>
+				<div class="flex items-center gap-2 flex-1 max-w-[200px]">
+					<div class="flex-1 h-1.5 bg-cyber-bg rounded-full overflow-hidden">
+						<div class="${colorClass} h-full rounded-full" style="width: ${percent.toFixed(1)}%"></div>
+					</div>
+					<span class="px-2 py-0.5 ${colorClass}/20 ${textClass} text-xs font-bold rounded min-w-[40px] text-center">${statusCounter[code]}</span>
+				</div>
+			</label>`;
 	}
-	html += `</div>`;
+	
+	html += `</div></div>`;
 	return html;
 }
 
 function renderReport(results, falsePositiveMode = false) {
 	if (!results || results.length === 0) return '';
-	let html = `<h3>Results${falsePositiveMode ? ' (False Positive Test)' : ''}</h3>`;
+	
+	let html = '';
 
-	// Add visual indicator for test mode
+	// Add visual indicator for test mode with explanation
 	if (falsePositiveMode) {
-		html += `<div class="false-positive-indicator mb-3">
-      <strong>🔍 False Positive Test Mode <span class="help-icon" onclick="toggleHelp('fp-help')" title="What is False Positive Test?">ℹ️</span></strong>
-      <div id="fp-help" class="help-content" style="display: none;">
-        <small><em>False Positive Test checks if your WAF incorrectly blocks legitimate traffic. This helps ensure your security doesn't interfere with normal users.</em></small>
-      </div>
-      <small>
-        <span style="color: #198754">200 = WAF correctly allows legitimate requests</span>
-        <span style="color: #dc3545">403 = WAF incorrectly blocks legitimate requests</span>
-      </small>
-    </div>`;
+		html += `<div class="flex items-center justify-between mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+					<svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+					</svg>
+				</div>
+				<div>
+					<h3 class="text-sm font-bold text-blue-400">False Positive Test</h3>
+					<p class="text-xs text-blue-300/70">Testing if legitimate traffic is being blocked by the WAF</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-4 text-xs">
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-success/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-cyber-success"></span>
+					<span class="text-cyber-success font-medium">200 = Allowed</span>
+				</span>
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-danger/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-cyber-danger"></span>
+					<span class="text-cyber-danger font-medium">403 = Blocked</span>
+				</span>
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-orange-500/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-orange-500"></span>
+					<span class="text-orange-400 font-medium">3xx = Redirect</span>
+				</span>
+				<button onclick="showHttpCodesModal('falsePositive')" class="px-3 py-1.5 bg-cyber-accent/10 hover:bg-cyber-accent/20 text-cyber-accent text-xs font-medium rounded-lg transition-all border border-cyber-accent/30 hover:border-cyber-accent">
+					Show all HTTP codes
+				</button>
+			</div>
+		</div>
+		<div class="mb-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
+			<p class="text-xs text-gray-300 leading-relaxed">
+				<strong class="text-blue-400">What is a False Positive Test?</strong> This test uses <strong class="text-white">legitimate, safe payloads</strong> to check if your WAF is blocking normal traffic. 
+				If you see <strong class="text-cyber-danger">403 (red)</strong>, it means legitimate requests are being blocked - this is a <strong class="text-cyber-danger">false positive</strong> and should be investigated.
+				<strong class="text-orange-400">Status 3xx (orange)</strong> means the server redirected the request. This could be a normal redirect or the WAF redirecting to a block page. Check the redirect location to determine if legitimate traffic is being redirected unnecessarily.
+			</p>
+		</div>`;
 	} else {
-		html += `<div class="normal-test-indicator mb-3">
-      <strong>🛡️ Security Test Mode <span class="help-icon" onclick="toggleHelp('security-help')" title="What is Security Test?">ℹ️</span></strong>
-      <div id="security-help" class="help-content" style="display: none;">
-        <small><em>Security Test checks if your WAF properly blocks malicious attack payloads. This helps verify your application is protected against common web attacks.</em></small>
-      </div>
-      <small>
-        <span style="color: #dc3545">200 = WAF did not protect your application</span>
-        <span style="color: #198754">403 = WAF protected your application</span>
-      </small>
-    </div>`;
+		html += `<div class="flex items-center justify-between mb-4 p-4 bg-cyber-card border border-cyber-accent/30 rounded-xl">
+			<div class="flex items-center gap-3">
+				<div class="w-10 h-10 rounded-lg bg-cyber-accent/20 flex items-center justify-center">
+					<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+					</svg>
+				</div>
+				<div>
+					<h3 class="text-sm font-bold text-cyber-accent">Security Test Complete</h3>
+					<p class="text-xs text-gray-400">WAF protection analysis results</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-4 text-xs">
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-success/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-cyber-success"></span>
+					<span class="text-cyber-success font-medium">403 = Protected</span>
+				</span>
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-danger/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-cyber-danger"></span>
+					<span class="text-cyber-danger font-medium">200 = Vulnerable</span>
+				</span>
+				<span class="flex items-center gap-2 px-3 py-1.5 bg-orange-500/20 rounded-lg">
+					<span class="w-2 h-2 rounded-full bg-orange-500"></span>
+					<span class="text-orange-400 font-medium">3xx = Redirect</span>
+				</span>
+				<button onclick="showHttpCodesModal('normal')" class="px-3 py-1.5 bg-cyber-accent/10 hover:bg-cyber-accent/20 text-cyber-accent text-xs font-medium rounded-lg transition-all border border-cyber-accent/30 hover:border-cyber-accent">
+					Show all HTTP codes
+				</button>
+			</div>
+		</div>
+		<div class="mb-4 p-3 bg-cyber-accent/5 border border-cyber-accent/20 rounded-lg">
+			<p class="text-xs text-gray-300 leading-relaxed">
+				<strong class="text-cyber-accent">What are these tests?</strong> This test sends <strong class="text-white">malicious payloads</strong> (SQL Injection, XSS, etc.) to check if your WAF blocks them. 
+				<strong class="text-cyber-success">Status 403 (green)</strong> means the WAF detected and blocked the attack. 
+				<strong class="text-cyber-danger">Status 200 (red)</strong> means the attack succeeded - your application is <strong class="text-cyber-danger">vulnerable</strong> and the WAF did not protect it.
+				<strong class="text-orange-400">Status 3xx (orange)</strong> means the server redirected the request. This could indicate the WAF is redirecting to a block page (good), or the server is redirecting normally (requires investigation). Check the redirect location to determine if it's a block page or a normal redirect.
+			</p>
+		</div>`;
 	}
 
 	// Add WAF detection info if available
 	if (results.length > 0 && results[0].wafDetected) {
-		html += `<div class="alert alert-info mb-3">
-			<strong>🛡️ WAF Detected:</strong> ${results[0].wafType}
-			<small class="text-muted"> (Auto-detection enabled)</small>
+		html += `<div class="flex items-center gap-3 mb-4 p-3 bg-cyber-accent/10 border border-cyber-accent/30 rounded-lg">
+			<svg class="w-5 h-5 text-cyber-accent shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+			</svg>
+			<span class="text-sm text-gray-300"><strong class="text-cyber-accent">WAF Detected:</strong> ${results[0].wafType}</span>
+			<span class="text-xs text-gray-500">(Auto-detection)</span>
 		</div>`;
 	}
 
 	html += renderSummary(results, falsePositiveMode);
-	html += `<table border='1' cellpadding='5' class='w-100' id='resultsTable'><tr><th>Category</th><th>Method</th><th>Status</th><th>Response Time</th><th>Payload</th></tr>`;
+	
+	// Results table with modern design
+	html += `<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl overflow-hidden">
+		<div class="overflow-x-auto">
+			<table class="w-full text-sm" id="resultsTable">
+				<thead>
+					<tr class="bg-cyber-elevated/50 border-b border-cyber-accent/20">
+						<th class="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Category</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Method</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">Time</th>
+						<th class="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Payload</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-cyber-accent/10">`;
+	
 	for (const r of results) {
-		const status_class = getStatusClass(r.status, r.is_redirect, falsePositiveMode);
-		let codeClass = '';
-		if (falsePositiveMode) {
-			codeClass = r.status == 200 || r.status == '200' ? ' payload-green' : '';
+		const statusStr = String(r.status);
+		const isError = statusStr === 'ERR' || statusStr === 'error' || statusStr === 'Error';
+		const codeNum = isError ? NaN : parseInt(statusStr, 10);
+		let statusBg = 'bg-gray-500/20 text-gray-400';
+		let payloadClass = '';
+		let rowBgColor = ''; // Row background color
+		let borderColor = ''; // Border color
+		
+		// Handle errors first (orange)
+		if (isError || isNaN(codeNum)) {
+			statusBg = 'bg-orange-500/20 text-orange-400';
+			rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+			borderColor = '#f97316'; // orange-500
+		} else if (falsePositiveMode) {
+			// False positive mode: 200 = good (green), 403 = bad (red)
+			if (codeNum >= 200 && codeNum < 300) { 
+				statusBg = 'bg-cyber-success/20 text-cyber-success'; 
+				payloadClass = 'text-cyber-success';
+				rowBgColor = 'rgba(34, 197, 94, 0.2)'; // green-500 with 20% opacity
+				borderColor = '#22c55e'; // green-500
+			}
+			else if (codeNum === 403) { 
+				statusBg = 'bg-cyber-danger/20 text-cyber-danger';
+				rowBgColor = 'rgba(239, 68, 68, 0.2)'; // red-500 with 20% opacity
+				borderColor = '#ef4444'; // red-500
+			}
+			else if (codeNum >= 300 && codeNum < 400) { 
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else if (codeNum >= 400 && codeNum < 500 && codeNum !== 403) { 
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else {
+				// Other status codes (gray)
+				rowBgColor = 'rgba(107, 114, 128, 0.1)'; // gray-500 with 10% opacity
+				borderColor = '#6b7280'; // gray-500
+			}
 		} else {
-			codeClass = r.status == 403 || r.status == '403' ? ' payload-green' : '';
+			// Normal mode: 403 = good (green), 200 = bad (red)
+			if (codeNum === 403) { 
+				statusBg = 'bg-cyber-success/20 text-cyber-success'; 
+				payloadClass = 'text-cyber-success';
+				rowBgColor = 'rgba(34, 197, 94, 0.2)'; // green-500 with 20% opacity
+				borderColor = '#22c55e'; // green-500
+			}
+			else if (codeNum >= 200 && codeNum < 300) { 
+				statusBg = 'bg-cyber-danger/20 text-cyber-danger';
+				rowBgColor = 'rgba(239, 68, 68, 0.2)'; // red-500 with 20% opacity
+				borderColor = '#ef4444'; // red-500
+			}
+			else if (codeNum >= 300 && codeNum < 400) { 
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else if (codeNum >= 400 && codeNum < 500 && codeNum !== 403) { 
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else {
+				// Other status codes (gray)
+				rowBgColor = 'rgba(107, 114, 128, 0.1)'; // gray-500 with 10% opacity
+				borderColor = '#6b7280'; // gray-500
+			}
 		}
+		
 		const responseTime = r.responseTime || 0;
-		html +=
-			`<tr data-status='${r.status}'>` +
-			`<td>${r.category}</td>` +
-			`<td class='text-center'>${r.method}</td>` +
-			`<td class='${status_class} text-center'>${r.status}</td>` +
-			`<td class='text-center'>${responseTime}ms</td>` +
-			`<td><code class='${codeClass}'>${escapeHtml(r.payload)}</code></td>` +
-			`</tr>`;
+		const rowStyle = `background-color: ${rowBgColor}; border-left: 4px solid ${borderColor};`;
+		
+		// Add tooltip for redirects
+		let statusTooltip = '';
+		let statusDisplay = r.status;
+		if (!isError && !isNaN(codeNum) && codeNum >= 300 && codeNum < 400) {
+			statusTooltip = `title="Redirect (${codeNum}): The server redirected this request. This could mean the WAF is redirecting to a block page (good) or the server is redirecting normally (requires investigation). Check the Location header to determine if it's a block page."`;
+			statusDisplay = `${r.status}`;
+		}
+		
+		html += `
+			<tr data-status="${r.status}" style="${rowStyle}" class="hover:brightness-110 transition-all">
+				<td class="px-4 py-2.5 text-gray-300">${escapeHtml(r.category)}</td>
+				<td class="px-4 py-2.5 text-center">
+					<span class="px-2 py-0.5 bg-cyber-accent/10 text-cyber-accent text-xs font-mono rounded">${r.method}</span>
+				</td>
+				<td class="px-4 py-2.5 text-center">
+					<span class="px-2 py-0.5 ${statusBg} text-xs font-bold rounded cursor-help" ${statusTooltip}>${statusDisplay}</span>
+				</td>
+				<td class="px-4 py-2.5 text-center text-xs text-gray-500">${responseTime}ms</td>
+				<td class="px-4 py-2.5">
+					<code class="text-xs font-mono ${payloadClass} bg-cyber-bg/50 px-2 py-1 rounded break-all">${escapeHtml(r.payload)}</code>
+				</td>
+			</tr>`;
 	}
-	html += `</table>`;
+	
+	html += `</tbody></table></div></div>`;
+	
 	setTimeout(() => {
 		filterResultsTableByStatus();
 		const all = document.querySelectorAll('.status-filter-checkbox');
@@ -176,7 +596,7 @@ function highlightCategoryCheckboxesByResults(results, falsePositiveMode = false
 	});
 }
 
-// --- Toggle payload template section within Additional Settings ---
+// --- Toggle payload template section within Advanced Settings ---
 function updatePayloadTemplateSection() {
 	const methodPOST = document.getElementById('methodPOST');
 	const methodPUT = document.getElementById('methodPUT');
@@ -189,73 +609,148 @@ function updatePayloadTemplateSection() {
 	}
 }
 
-// --- Toggle More Settings panel ---
-function toggleMoreSettings() {
-	const panel = document.getElementById('moreSettingsPanel');
-	const button = document.getElementById('moreSettingsToggle');
-	if (!panel || !button) return;
-
-	const isVisible = panel.style.display !== 'none';
-	if (isVisible) {
-		// Start closing animation
-		panel.style.maxHeight = panel.scrollHeight + 'px';
-		panel.offsetHeight; // Force reflow
-		panel.style.maxHeight = '0';
-		panel.style.opacity = '0';
-		panel.style.transform = 'translateY(-10px)';
-
-		setTimeout(() => {
-			panel.style.display = 'none';
-		}, 300);
-
-		button.innerHTML = '⚙️';
-		localStorage.setItem('wafchecker_moreSettingsExpanded', 'false');
+// --- Switch between Target and Advanced tabs ---
+function switchConfigTab(tab) {
+	const tabTarget = document.getElementById('tabTarget');
+	const tabAdvanced = document.getElementById('tabAdvanced');
+	const panelTarget = document.getElementById('panelTarget');
+	const panelAdvanced = document.getElementById('panelAdvanced');
+	
+	if (!tabTarget || !tabAdvanced || !panelTarget || !panelAdvanced) return;
+	
+	if (tab === 'target') {
+		// Activate Target tab
+		tabTarget.classList.add('border-cyber-accent', 'text-cyber-accent');
+		tabTarget.classList.remove('border-transparent', 'text-gray-400');
+		tabAdvanced.classList.remove('border-cyber-accent', 'text-cyber-accent');
+		tabAdvanced.classList.add('border-transparent', 'text-gray-400');
+		panelTarget.style.display = 'block';
+		panelAdvanced.style.display = 'none';
 	} else {
-		// Start opening animation
-		panel.style.display = '';
-		panel.style.maxHeight = '0';
-		panel.style.opacity = '0';
-		panel.style.transform = 'translateY(-10px)';
-
-		panel.offsetHeight; // Force reflow
-		panel.style.maxHeight = panel.scrollHeight + 'px';
-		panel.style.opacity = '1';
-		panel.style.transform = 'translateY(0)';
-
-		// Clean up after animation
-		setTimeout(() => {
-			panel.style.maxHeight = '';
-		}, 300);
-
-		button.innerHTML = '⚙️';
-		localStorage.setItem('wafchecker_moreSettingsExpanded', 'true');
+		// Activate Advanced tab
+		tabAdvanced.classList.add('border-cyber-accent', 'text-cyber-accent');
+		tabAdvanced.classList.remove('border-transparent', 'text-gray-400');
+		tabTarget.classList.remove('border-cyber-accent', 'text-cyber-accent');
+		tabTarget.classList.add('border-transparent', 'text-gray-400');
+		panelTarget.style.display = 'none';
+		panelAdvanced.style.display = 'block';
 	}
 }
 
-// Update description text based on false positive test mode
+// Update description text - deprecated, kept for compatibility
 function updateDescriptionText() {
-	const description = document.querySelector('.description-waf-check');
-	if (description) {
-		description.innerHTML = `This project helps you check how well your Web Application Firewall (WAF) protects your product against common web attacks.`;
+	// No longer needed as description was removed from UI
+}
+
+// Progress bar helper functions
+let progressInterval = null;
+let progressAnimationValue = 0;
+
+function showProgress() {
+	const progressBar = document.getElementById('progressBar');
+	if (progressBar) {
+		progressBar.classList.remove('hidden');
 	}
+	// Start indeterminate animation
+	startIndeterminateProgress();
+}
+
+function hideProgress() {
+	const progressBar = document.getElementById('progressBar');
+	if (progressBar) {
+		progressBar.classList.add('hidden');
+	}
+	stopIndeterminateProgress();
+}
+
+function startIndeterminateProgress() {
+	stopIndeterminateProgress();
+	progressAnimationValue = 0;
+	const progressFill = document.getElementById('progressFill');
+	if (progressFill) {
+		progressFill.style.transition = 'width 0.3s ease-out';
+	}
+}
+
+function stopIndeterminateProgress() {
+	if (progressInterval) {
+		clearInterval(progressInterval);
+		progressInterval = null;
+	}
+}
+
+function updateProgress(current, total, category = '', text = 'Running tests...', batch = 0) {
+	stopIndeterminateProgress();
+	
+	// Calculate percent, allow 100% when current >= total
+	const percent = total > 0 ? Math.min(Math.round((current / total) * 100), 100) : 0;
+	
+	const progressFill = document.getElementById('progressFill');
+	const progressPercent = document.getElementById('progressPercent');
+	const progressText = document.getElementById('progressText');
+	const progressCategory = document.getElementById('progressCategory');
+	const progressCount = document.getElementById('progressCount');
+	
+	if (progressFill) {
+		progressFill.style.transition = 'width 0.5s ease-out';
+		progressFill.style.width = `${percent}%`;
+	}
+	if (progressPercent) progressPercent.textContent = `${percent}%`;
+	if (progressText) progressText.textContent = text;
+	if (progressCategory) progressCategory.textContent = category || 'Processing...';
+	if (progressCount) {
+		const totalText = total > 0 ? ` / ${total}` : '';
+		progressCount.textContent = `${current}${totalText} tests`;
+	}
+}
+
+function finalizeProgress() {
+	const progressFill = document.getElementById('progressFill');
+	const progressPercent = document.getElementById('progressPercent');
+	const progressText = document.getElementById('progressText');
+	const progressCategory = document.getElementById('progressCategory');
+	
+	if (progressFill) {
+		progressFill.style.transition = 'width 0.3s ease-out';
+		progressFill.style.width = '100%';
+	}
+	if (progressPercent) progressPercent.textContent = '100%';
+	if (progressText) progressText.textContent = 'Tests completed!';
+	if (progressCategory) progressCategory.textContent = 'Complete';
 }
 
 async function fetchResults() {
 	const btn = document.getElementById('checkBtn');
 	btn.disabled = true;
 	const oldText = btn.textContent;
-	btn.textContent = 'Wait...';
-	const url = document.getElementById('url').value;
+	btn.textContent = 'Testing...';
+	const urlInput = document.getElementById('url');
+	const url = normalizeUrl(urlInput.value);
+	
+	// Update the input field with normalized URL if it was changed
+	if (url !== urlInput.value) {
+		urlInput.value = url;
+	}
+
+	// Show progress bar
+	showProgress();
+	updateProgress(0, 0, 'Initializing...', 'Preparing tests...');
 
 	// Create test session
 	const sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 	const startTime = new Date().toISOString();
 
-	// Collect selected methods — ТОЛЬКО из .http-methods!
-	const methodCheckboxes = document.querySelectorAll('.http-methods input[type=checkbox]');
+	// Collect selected methods from method checkboxes
+	const methodCheckboxes = document.querySelectorAll('.methods-grid input[type=checkbox]');
 	const selectedMethods = Array.from(methodCheckboxes)
 		.filter((cb) => cb.checked)
 		.map((cb) => cb.value);
+	
+	// Ensure at least one method is selected
+	if (selectedMethods.length === 0) {
+		showAlert('Please select at least one HTTP method', 'No Method Selected', 'warning');
+		return;
+	}
 	// Follow redirect
 	const followRedirect = document.getElementById('followRedirect')?.checked ? true : false;
 	// False positive test
@@ -303,13 +798,13 @@ async function fetchResults() {
 		customHeaders = headersEl.value;
 		localStorage.setItem('wafchecker_customHeaders', customHeaders);
 	}
-	let page = 0;
 	let allResults = [];
 	let detectedWAFType = window.detectedWAF || null;
 	let wafDetection = null;
 
 	// Auto-detect WAF first if enabled
 	if (autoDetectWAF && !detectedWAFType) {
+		updateProgress(0, 0, 'Detecting WAF...', 'Auto-detecting WAF...');
 		try {
 			const wafResponse = await fetch(`/api/waf-detect?url=${encodeURIComponent(url)}`);
 			if (wafResponse.ok) {
@@ -326,38 +821,118 @@ async function fetchResults() {
 		}
 	}
 
+	// Get custom payloads from localStorage
+	let customPayloadsData = {};
 	try {
-		while (true) {
-			const params = new URLSearchParams({
-				url,
-				methods: selectedMethods.join(','),
-				categories: selectedCategories.join(','),
-				page: page,
-				followRedirect: followRedirect ? '1' : '0',
-				falsePositiveTest: falsePositiveTest ? '1' : '0',
-				caseSensitiveTest: caseSensitiveTest ? '1' : '0',
-				enhancedPayloads: enhancedPayloads ? '1' : '0',
-				useAdvancedPayloads: useAdvancedPayloads ? '1' : '0',
-				autoDetectWAF: autoDetectWAF ? '1' : '0',
-				useEncodingVariations: useEncodingVariations ? '1' : '0',
-				httpManipulation: httpManipulation ? '1' : '0',
-				detectedWAF: detectedWAFType || '',
-			});
-			const resp = await fetch(`/api/check?${params.toString()}`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					payloadTemplate,
-					customHeaders,
-					detectedWAF: detectedWAFType,
-				}),
-			});
-			if (!resp.ok) break;
-			const results = await resp.json();
-			if (!results || !results.length) break;
-			allResults = allResults.concat(results);
-			page++;
+		const stored = localStorage.getItem('wafchecker_customPayloads');
+		if (stored) {
+			customPayloadsData = JSON.parse(stored);
 		}
+	} catch (e) {
+		console.warn('Failed to load custom payloads:', e);
+	}
+
+	// Use streaming API for real-time progress
+	const totalCategories = selectedCategories.length;
+	let estimatedTotalTests = totalCategories * selectedMethods.length * 5; // Initial estimate
+	let completedTests = 0;
+	let currentCategory = '';
+	
+	updateProgress(0, estimatedTotalTests, `Starting ${totalCategories} categories...`, 'Initializing tests...', 0);
+
+	try {
+		// Use streaming endpoint
+		const params = new URLSearchParams({
+			url,
+			methods: selectedMethods.join(','),
+			categories: selectedCategories.join(','),
+			followRedirect: followRedirect ? '1' : '0',
+			falsePositiveTest: falsePositiveTest ? '1' : '0',
+			caseSensitiveTest: caseSensitiveTest ? '1' : '0',
+			enhancedPayloads: enhancedPayloads ? '1' : '0',
+			useAdvancedPayloads: useAdvancedPayloads ? '1' : '0',
+			autoDetectWAF: autoDetectWAF ? '1' : '0',
+			useEncodingVariations: useEncodingVariations ? '1' : '0',
+			httpManipulation: httpManipulation ? '1' : '0',
+			detectedWAF: detectedWAFType || '',
+		});
+
+		const response = await fetch(`/api/check-stream?${params.toString()}`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				payloadTemplate,
+				customHeaders,
+				detectedWAF: detectedWAFType,
+				customPayloads: customPayloadsData,
+			}),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Stream request failed: ${response.status}`);
+		}
+
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let streamComplete = false;
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			buffer += decoder.decode(value, { stream: true });
+			const lines = buffer.split('\n');
+			buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+			for (const line of lines) {
+				if (!line.trim()) continue;
+				if (line.startsWith('data: ')) {
+					try {
+						const data = JSON.parse(line.slice(6));
+						
+						if (data.type === 'total') {
+							estimatedTotalTests = data.count;
+							updateProgress(0, estimatedTotalTests, 'Starting tests...', 'Initializing...', 0);
+						} else if (data.type === 'result') {
+							allResults.push(data.result);
+							completedTests = data.completed;
+							
+							// Update current category from result
+							if (data.result.category && data.result.category !== currentCategory) {
+								currentCategory = data.result.category;
+							}
+							
+							// Update progress immediately
+							updateProgress(
+								completedTests,
+								estimatedTotalTests,
+								currentCategory || 'Processing...',
+								`${completedTests} tests completed`,
+								0
+							);
+						} else if (data.type === 'waf-detected') {
+							if (data.waf && data.waf.detected) {
+								detectedWAFType = data.waf.wafType;
+								window.detectedWAF = detectedWAFType;
+							}
+						} else if (data.type === 'complete') {
+							streamComplete = true;
+							break;
+						} else if (data.type === 'error') {
+							throw new Error(data.message || 'Unknown error');
+						}
+					} catch (e) {
+						console.error('Error parsing SSE data:', e, line);
+					}
+				}
+			}
+			
+			if (streamComplete) break;
+		}
+
+		// Finalize progress
+		updateProgress(completedTests, completedTests, 'Complete!', 'All tests completed!');
 
 		const endTime = new Date().toISOString();
 
@@ -384,6 +959,10 @@ async function fetchResults() {
 			},
 		};
 
+		// Short delay to show 100% before hiding
+		await new Promise(resolve => setTimeout(resolve, 500));
+		hideProgress();
+
 		document.getElementById('results').innerHTML = renderReport(allResults, falsePositiveTest);
 		document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
 		highlightCategoryCheckboxesByResults(allResults, falsePositiveTest);
@@ -393,6 +972,7 @@ async function fetchResults() {
 	} finally {
 		btn.disabled = false;
 		btn.textContent = oldText;
+		hideProgress();
 	}
 }
 
@@ -408,7 +988,7 @@ function restoreStateFromLocalStorage() {
 	if (methods) {
 		try {
 			const arr = JSON.parse(methods);
-			const methodCheckboxes = document.querySelectorAll('.http-methods input[type=checkbox]');
+			const methodCheckboxes = document.querySelectorAll('.methods-grid input[type=checkbox]');
 			methodCheckboxes.forEach((cb) => {
 				cb.checked = arr.includes(cb.value);
 			});
@@ -491,53 +1071,22 @@ function restoreStateFromLocalStorage() {
 		if (headersEl) headersEl.value = customHeaders;
 	}
 
-	// More Settings panel state
-	const moreSettingsExpanded = localStorage.getItem('wafchecker_moreSettingsExpanded');
-	if (moreSettingsExpanded === 'true') {
-		const panel = document.getElementById('moreSettingsPanel');
-		const button = document.getElementById('moreSettingsToggle');
-		if (panel && button) {
-			panel.style.display = '';
-			panel.style.maxHeight = '';
-			panel.style.opacity = '1';
-			panel.style.transform = 'translateY(0)';
-			button.innerHTML = '⚙️';
-		}
-	}
 }
 
-// Theme logic
-function setTheme(theme) {
-	document.body.setAttribute('data-theme', theme);
-	localStorage.setItem('theme', theme);
-	// Use unicode sun/moon for theme toggle
-	document.getElementById('themeToggle').textContent = theme === 'dark' ? '\u2600' : '\u263E';
-	// Adjust subtitle color for dark/light
-	const subtitle = document.getElementById('subtitle');
-	if (subtitle) {
-		if (theme === 'dark') {
-			subtitle.style.color = '#bfc6ce';
-		} else {
-			subtitle.style.color = '#6c757d';
-		}
-	}
-	// Adjust input placeholder color for dark/light
-	const urlInput = document.getElementById('url');
-	urlInput.classList.toggle('dark-placeholder', theme === 'dark');
-}
-function getPreferredTheme() {
-	const stored = localStorage.getItem('theme');
-	if (stored) return stored;
-	return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
 
 // WAF Detection functionality
 async function detectWAF() {
 	const btn = document.getElementById('detectWafBtn');
-	const url = document.getElementById('url').value;
+	const urlInput = document.getElementById('url');
+	const url = normalizeUrl(urlInput.value);
+	
+	// Update the input field with normalized URL if it was changed
+	if (url !== urlInput.value) {
+		urlInput.value = url;
+	}
 
 	if (!url) {
-		alert('Please enter a URL first');
+		showAlert('Please enter a URL first', 'Missing URL', 'warning');
 		return;
 	}
 
@@ -553,11 +1102,11 @@ async function detectWAF() {
 			displayWAFDetectionResults(data);
 			showWAFPanel(data);
 		} else {
-			alert(`WAF Detection failed: ${data.error || 'Unknown error'}`);
+			showAlert(`WAF Detection failed: ${data.error || 'Unknown error'}`, 'Error', 'error');
 		}
 	} catch (error) {
 		console.error('WAF Detection error:', error);
-		alert('WAF Detection failed. Please check the console for details.');
+		showAlert('WAF Detection failed. Please check the console for details.', 'Error', 'error');
 	} finally {
 		btn.disabled = false;
 		btn.textContent = oldText;
@@ -566,65 +1115,119 @@ async function detectWAF() {
 
 function displayWAFDetectionResults(data) {
 	const resultsDiv = document.getElementById('results');
-	let html = '<div class="card mb-4"><div class="card-header"><h3>🛡️ WAF Detection Results</h3></div><div class="card-body">';
+	
+	let html = `<div class="bg-cyber-card border border-cyber-accent/30 rounded-xl overflow-hidden mb-4">
+		<div class="flex items-center gap-3 p-4 border-b border-cyber-accent/20 bg-cyber-accent/10">
+			<div class="w-10 h-10 rounded-lg bg-cyber-accent/20 flex items-center justify-center">
+				<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+				</svg>
+			</div>
+			<div>
+				<h3 class="text-sm font-bold text-cyber-accent">WAF Detection Results</h3>
+				<p class="text-xs text-gray-400">Active fingerprinting analysis</p>
+			</div>
+		</div>
+		
+		<div class="p-4">
+			<!-- Explanation Section -->
+			<div class="mb-4 p-3 bg-cyber-accent/5 border border-cyber-accent/20 rounded-lg">
+				<p class="text-xs text-gray-300 leading-relaxed mb-2">
+					<strong class="text-cyber-accent">How does WAF detection work?</strong> The detection uses multiple techniques:
+				</p>
+				<ul class="text-xs text-gray-400 space-y-1 ml-4 list-disc">
+					<li><strong class="text-white">HTTP Headers</strong>: Analyzes response headers (Server, X-*, CF-*, etc.) for WAF signatures</li>
+					<li><strong class="text-white">Status Codes</strong>: Checks for typical WAF response codes (403, 406, 429)</li>
+					<li><strong class="text-white">Response Body</strong>: Searches for WAF-specific patterns and error messages</li>
+					<li><strong class="text-white">Cookies</strong>: Detects WAF-related cookies (e.g., Cloudflare, Imperva)</li>
+					<li><strong class="text-white">Active Probing</strong>: Sends test payloads (SQL Injection, XSS) and analyzes responses</li>
+					<li><strong class="text-white">Response Time</strong>: Some WAFs have characteristic response times</li>
+				</ul>
+				<p class="text-xs text-gray-400 mt-2 italic">
+					Detection confidence is calculated based on matching signatures. Higher confidence = more reliable detection.
+				</p>
+			</div>`;
 
 	// Detection results
 	if (data.detection && data.detection.detected) {
-		html += `<div class="alert alert-success mb-3">
-			<h5><strong>WAF Detected: ${data.detection.wafType}</strong></h5>
-			<p><strong>Confidence:</strong> ${data.detection.confidence}%</p>
-		</div>`;
+		html += `<div class="mb-4 p-4 bg-cyber-success/10 border border-cyber-success/30 rounded-lg">
+			<div class="flex items-center gap-3 mb-2">
+				<svg class="w-6 h-6 text-cyber-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+				</svg>
+				<div>
+					<h4 class="text-sm font-bold text-cyber-success">WAF Detected: ${escapeHtml(data.detection.wafType)}</h4>
+					<p class="text-xs text-gray-400">Confidence: <strong class="text-white">${data.detection.confidence}%</strong></p>
+				</div>
+			</div>`;
 
 		if (data.detection.evidence && data.detection.evidence.length > 0) {
-			html += '<h6>Evidence:</h6><ul>';
+			html += `<div class="mt-3">
+				<p class="text-xs font-bold text-gray-300 mb-2">Evidence:</p>
+				<ul class="space-y-1">`;
 			data.detection.evidence.forEach((evidence) => {
-				html += `<li><code>${escapeHtml(evidence)}</code></li>`;
+				html += `<li class="text-xs text-gray-400"><code class="bg-cyber-bg/50 px-2 py-0.5 rounded">${escapeHtml(evidence)}</code></li>`;
 			});
-			html += '</ul>';
+			html += `</ul></div>`;
 		}
 
 		if (data.detection.suggestedBypassTechniques && data.detection.suggestedBypassTechniques.length > 0) {
-			html += '<h6>Suggested Bypass Techniques:</h6><ul>';
+			html += `<div class="mt-3">
+				<p class="text-xs font-bold text-cyber-warning mb-2">Suggested Bypass Techniques:</p>
+				<ul class="space-y-1">`;
 			data.detection.suggestedBypassTechniques.forEach((technique) => {
-				html += `<li>${escapeHtml(technique)}</li>`;
+				html += `<li class="text-xs text-gray-400">• ${escapeHtml(technique)}</li>`;
 			});
-			html += '</ul>';
+			html += `</ul></div>`;
 		}
+		
+		html += `</div>`;
 	} else {
-		html += '<div class="alert alert-warning">No WAF detected or low confidence detection.</div>';
+		html += `<div class="mb-4 p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+			<div class="flex items-center gap-3">
+				<svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+				</svg>
+				<div>
+					<p class="text-sm font-bold text-orange-400">No WAF detected</p>
+					<p class="text-xs text-gray-400">Low confidence or no WAF signatures found</p>
+				</div>
+			</div>
+		</div>`;
 	}
 
 	// Bypass opportunities
 	if (data.bypassOpportunities) {
-		html += '<h6>Detected Bypass Opportunities:</h6>';
-		html += '<div class="row">';
+		html += `<div class="mb-4">
+			<p class="text-xs font-bold text-gray-300 mb-3">Bypass Opportunities:</p>
+			<div class="grid grid-cols-2 gap-2">`;
 
 		const opportunities = [
-			{ key: 'httpMethodsBypass', label: 'HTTP Method Bypass', icon: '🔄' },
+			{ key: 'httpMethodsBypass', label: 'HTTP Method Bypass', icon: '🔀' },
 			{ key: 'headerBypass', label: 'Header Bypass', icon: '📋' },
 			{ key: 'encodingBypass', label: 'Encoding Bypass', icon: '🔤' },
-			{ key: 'parameterPollution', label: 'Parameter Pollution', icon: '🔀' },
+			{ key: 'parameterPollution', label: 'Parameter Pollution', icon: '🔁' },
 		];
 
 		opportunities.forEach((opp) => {
 			const status = data.bypassOpportunities[opp.key];
-			const badgeClass = status ? 'bg-success' : 'bg-secondary';
+			const bgClass = status ? 'bg-cyber-warning/20 border-cyber-warning/30' : 'bg-gray-500/10 border-gray-500/20';
+			const textClass = status ? 'text-cyber-warning' : 'text-gray-500';
 			const statusText = status ? 'Possible' : 'Not detected';
 
-			html += `<div class="col-6 mb-2">
-				<span class="badge ${badgeClass}">${opp.icon} ${opp.label}: ${statusText}</span>
+			html += `<div class="p-2 border rounded-lg ${bgClass}">
+				<div class="flex items-center gap-2">
+					<span class="text-xs">${opp.icon}</span>
+					<span class="text-xs font-bold ${textClass}">${opp.label}</span>
+				</div>
+				<p class="text-xs text-gray-400 mt-1">${statusText}</p>
 			</div>`;
 		});
 
-		html += '</div>';
+		html += `</div></div>`;
 	}
 
-	html += `<div class="mt-3">
-		<button class="btn btn-primary btn-sm" onclick="useAdvancedPayloads()">Use Advanced Payloads</button>
-		<button class="btn btn-outline-secondary btn-sm" onclick="clearWAFResults()">Clear</button>
-	</div>`;
-
-	html += '</div></div>';
+	html += `</div></div>`;
 	resultsDiv.innerHTML = html + resultsDiv.innerHTML;
 }
 
@@ -676,7 +1279,7 @@ function useAdvancedPayloads() {
 	if (checkbox) checkbox.checked = true;
 	if (encodingCheckbox) encodingCheckbox.checked = true;
 
-	alert('Advanced payloads enabled! Run the test to see WAF-specific bypass techniques.');
+	showAlert('Advanced payloads enabled! Run the test to see WAF-specific bypass techniques.', 'Success', 'success');
 }
 
 function clearWAFResults() {
@@ -691,10 +1294,16 @@ function clearWAFResults() {
 // HTTP Manipulation Testing
 async function testHTTPManipulation() {
 	const btn = document.getElementById('httpManipulationBtn');
-	const url = document.getElementById('url').value;
+	const urlInput = document.getElementById('url');
+	const url = normalizeUrl(urlInput.value);
+	
+	// Update the input field with normalized URL if it was changed
+	if (url !== urlInput.value) {
+		urlInput.value = url;
+	}
 
 	if (!url) {
-		alert('Please enter a URL first');
+		showAlert('Please enter a URL first', 'Missing URL', 'warning');
 		return;
 	}
 
@@ -709,11 +1318,11 @@ async function testHTTPManipulation() {
 		if (response.ok) {
 			displayHTTPManipulationResults(data);
 		} else {
-			alert(`HTTP Manipulation test failed: ${data.error || 'Unknown error'}`);
+			showAlert(`HTTP Manipulation test failed: ${data.error || 'Unknown error'}`, 'Error', 'error');
 		}
 	} catch (error) {
 		console.error('HTTP Manipulation test error:', error);
-		alert('HTTP Manipulation test failed. Please check the console for details.');
+		showAlert('HTTP Manipulation test failed. Please check the console for details.', 'Error', 'error');
 	} finally {
 		btn.disabled = false;
 		btn.textContent = oldText;
@@ -722,41 +1331,163 @@ async function testHTTPManipulation() {
 
 function displayHTTPManipulationResults(data) {
 	const resultsDiv = document.getElementById('results');
-	let html = '<div class="card mb-4"><div class="card-header"><h3>🔄 HTTP Manipulation Test Results</h3></div><div class="card-body">';
+	
+	let html = `<div class="flex items-center justify-between mb-4 p-4 bg-cyber-card border border-cyber-warning/30 rounded-xl">
+		<div class="flex items-center gap-3">
+			<div class="w-10 h-10 rounded-lg bg-cyber-warning/20 flex items-center justify-center">
+				<svg class="w-5 h-5 text-cyber-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+				</svg>
+			</div>
+			<div>
+				<h3 class="text-sm font-bold text-cyber-warning">HTTP Manipulation Test</h3>
+				<p class="text-xs text-gray-400">Testing WAF bypass via protocol manipulation</p>
+			</div>
+		</div>
+		<div class="flex items-center gap-4 text-xs">
+			<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-success/20 rounded-lg">
+				<span class="w-2 h-2 rounded-full bg-cyber-success"></span>
+				<span class="text-cyber-success font-medium">403 = Protected</span>
+			</span>
+			<span class="flex items-center gap-2 px-3 py-1.5 bg-cyber-danger/20 rounded-lg">
+				<span class="w-2 h-2 rounded-full bg-cyber-danger"></span>
+				<span class="text-cyber-danger font-medium">200 = Bypass</span>
+			</span>
+			<button onclick="showHttpCodesModal('httpManip')" class="px-3 py-1.5 bg-cyber-accent/10 hover:bg-cyber-accent/20 text-cyber-accent text-xs font-medium rounded-lg transition-all border border-cyber-accent/30 hover:border-cyber-accent">
+				Show all HTTP codes
+			</button>
+		</div>
+	</div>
+	<div class="mb-4 p-3 bg-cyber-warning/5 border border-cyber-warning/20 rounded-lg">
+		<p class="text-xs text-gray-300 leading-relaxed">
+			<strong class="text-cyber-warning">What is HTTP Manipulation?</strong> This test checks if your WAF can be <strong class="text-cyber-danger">bypassed</strong> by manipulating the HTTP protocol instead of using malicious payloads. 
+			It tests techniques like <strong class="text-white">HTTP Verb Tampering</strong> (using non-standard methods like PATCH, TRACE), <strong class="text-white">Parameter Pollution</strong> (sending duplicate parameters), and <strong class="text-white">Content-Type Confusion</strong>. 
+			<strong class="text-cyber-success">Status 403 (green)</strong> means the WAF blocked the manipulation. 
+			<strong class="text-cyber-danger">Status 200 (red)</strong> means the request succeeded - the WAF can be <strong class="text-cyber-danger">bypassed</strong> with this technique.
+		</p>
+	</div>
+	
+	<div class="bg-cyber-card border border-cyber-warning/30 rounded-xl overflow-hidden mb-4">`;
 
 	if (data.results && data.results.length > 0) {
-		html += '<div class="table-responsive">';
-		html += '<table class="table table-sm"><thead><tr><th>Test Type</th><th>Method</th><th>Status</th><th>Result</th></tr></thead><tbody>';
+		html += `<div class="overflow-x-auto">
+			<table class="w-full text-sm">
+				<thead>
+					<tr class="bg-cyber-elevated/50 border-b border-cyber-accent/20">
+						<th class="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase">Technique</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase">Method</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase">Status</th>
+						<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase">Result</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-cyber-accent/10">`;
 
 		data.results.forEach((result) => {
-			const statusClass = getStatusClass(result.status, result.is_redirect);
-			const resultText = result.bypassed ? 'Potential Bypass' : 'Blocked/Failed';
-			const resultBadge = result.bypassed ? 'badge bg-warning' : 'badge bg-success';
+			const statusStr = String(result.status);
+			const isError = statusStr === 'ERR' || statusStr === 'error' || statusStr === 'Error';
+			const codeNum = isError ? NaN : parseInt(statusStr, 10);
+			let statusBg = 'bg-gray-500/20 text-gray-400';
+			let rowBgColor = '';
+			let borderColor = '';
+			
+			// Handle errors first (orange)
+			if (isError || isNaN(codeNum)) {
+				statusBg = 'bg-orange-500/20 text-orange-400';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			} else if (codeNum >= 200 && codeNum < 300) {
+				statusBg = 'bg-cyber-danger/20 text-cyber-danger';
+				// For HTTP manipulation, 200 = bypass = red
+				rowBgColor = 'rgba(239, 68, 68, 0.2)'; // red-500 with 20% opacity
+				borderColor = '#ef4444'; // red-500
+			}
+			else if (codeNum === 403) {
+				statusBg = 'bg-cyber-success/20 text-cyber-success';
+				// 403 = blocked = green
+				rowBgColor = 'rgba(34, 197, 94, 0.2)'; // green-500 with 20% opacity
+				borderColor = '#22c55e'; // green-500
+			}
+			else if (codeNum >= 300 && codeNum < 400) {
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else if (codeNum >= 400 && codeNum < 500 && codeNum !== 403) {
+				statusBg = 'bg-cyber-warning/20 text-cyber-warning';
+				rowBgColor = 'rgba(249, 115, 22, 0.2)'; // orange-500 with 20% opacity
+				borderColor = '#f97316'; // orange-500
+			}
+			else {
+				rowBgColor = 'rgba(107, 114, 128, 0.1)'; // gray-500 with 10% opacity
+				borderColor = '#6b7280'; // gray-500
+			}
+			
+			// Determine if bypass occurred based on status code
+			// For HTTP manipulation: 200 = potential bypass, 403 = blocked, others = error/redirect
+			let resultText = 'Blocked';
+			let resultBg = 'bg-cyber-success/20 text-cyber-success';
+			
+			if (!isError && !isNaN(codeNum)) {
+				if (codeNum >= 200 && codeNum < 300) {
+					// Status 200 = request succeeded = potential bypass
+					resultText = 'Potential Bypass';
+					resultBg = 'bg-cyber-warning/20 text-cyber-warning';
+					// Already set to red above
+				} else if (codeNum === 403) {
+					// Status 403 = WAF blocked = good
+					resultText = 'Blocked';
+					resultBg = 'bg-cyber-success/20 text-cyber-success';
+					// Already set to green above
+				} else if (codeNum >= 300 && codeNum < 400) {
+					// Redirect
+					resultText = 'Redirect';
+					resultBg = 'bg-orange-500/20 text-orange-400';
+				} else if (codeNum >= 400 && codeNum < 500) {
+					// Other 4xx errors
+					resultText = 'Error';
+					resultBg = 'bg-orange-500/20 text-orange-400';
+				} else {
+					resultText = 'Unknown';
+					resultBg = 'bg-gray-500/20 text-gray-400';
+				}
+			} else {
+				// Error case
+				resultText = 'Error';
+				resultBg = 'bg-orange-500/20 text-orange-400';
+			}
 
-			html += `<tr>
-				<td>${result.testType}</td>
-				<td class="text-center">${result.method}</td>
-				<td class="text-center"><span class="badge ${statusClass}">${result.status}</span></td>
-				<td><span class="${resultBadge}">${resultText}</span></td>
+			const rowStyle = `background-color: ${rowBgColor}; border-left: 4px solid ${borderColor};`;
+			const methodDisplay = result.method && result.method !== 'undefined' ? result.method : (result.technique || 'N/A');
+			html += `<tr style="${rowStyle}" class="hover:brightness-110 transition-all">
+				<td class="px-4 py-2.5 text-gray-300">${escapeHtml(result.testType || result.technique || 'Unknown')}</td>
+				<td class="px-4 py-2.5 text-center">
+					<span class="px-2 py-0.5 bg-cyber-accent/10 text-cyber-accent text-xs font-mono rounded">${escapeHtml(methodDisplay)}</span>
+				</td>
+				<td class="px-4 py-2.5 text-center">
+					<span class="px-2 py-0.5 ${statusBg} text-xs font-bold rounded">${result.status}</span>
+				</td>
+				<td class="px-4 py-2.5 text-center">
+					<span class="px-2 py-1 ${resultBg} text-xs font-bold rounded">${resultText}</span>
+				</td>
 			</tr>`;
 		});
 
 		html += '</tbody></table></div>';
 	} else {
-		html += '<div class="alert alert-info">No HTTP manipulation tests performed.</div>';
+		html += `<div class="p-4 text-center text-gray-400 text-sm">No HTTP manipulation tests performed.</div>`;
 	}
 
-	html += '</div></div>';
+	html += '</div>';
 	resultsDiv.innerHTML = html + resultsDiv.innerHTML;
 }
 
 // HTTP Manipulation Testing functionality
 async function testHTTPManipulation() {
 	const btn = document.getElementById('httpManipulationBtn');
-	const url = document.getElementById('url').value;
+	const url = normalizeUrl(document.getElementById('url').value);
 
 	if (!url) {
-		alert('Please enter a URL first');
+		showAlert('Please enter a URL first', 'Missing URL', 'warning');
 		return;
 	}
 
@@ -771,82 +1502,47 @@ async function testHTTPManipulation() {
 		if (response.ok) {
 			displayHTTPManipulationResults(data);
 		} else {
-			alert(`HTTP Manipulation test failed: ${data.error || 'Unknown error'}`);
+			showAlert(`HTTP Manipulation test failed: ${data.error || 'Unknown error'}`, 'Error', 'error');
 		}
 	} catch (error) {
 		console.error('HTTP Manipulation test error:', error);
-		alert('HTTP Manipulation test failed. Please check the console for details.');
+		showAlert('HTTP Manipulation test failed. Please check the console for details.', 'Error', 'error');
 	} finally {
 		btn.disabled = false;
 		btn.textContent = oldText;
 	}
 }
 
-function displayHTTPManipulationResults(data) {
-	const resultsDiv = document.getElementById('results');
-	let html = '<div class="card mb-4"><div class="card-header"><h3>🔄 HTTP Manipulation Test Results</h3></div><div class="card-body">';
-
-	// Summary
-	html += `<div class="alert alert-info">
-		<p><strong>Total Techniques:</strong> ${data.total_techniques || 'N/A'}</p>
-		<p><strong>Tested:</strong> ${data.tested_techniques || 'N/A'}</p>
-		<p><strong>Results:</strong> ${data.results ? data.results.length : 0}</p>
-	</div>`;
-
-	// Results table
-	if (data.results && data.results.length > 0) {
-		html += '<div class="table-responsive">';
-		html += '<table class="table table-sm"><thead><tr><th>Technique</th><th>Method</th><th>Status</th><th>Result</th></tr></thead><tbody>';
-
-		data.results.forEach((result) => {
-			const statusClass = getStatusClass(result.status, result.is_redirect);
-			const resultText = result.bypassed ? 'Potential Bypass' : 'Blocked/Failed';
-			const resultBadge = result.bypassed ? 'badge bg-warning' : 'badge bg-success';
-
-			html += `<tr>
-				<td>${result.technique || result.testType || 'Unknown'}</td>
-				<td class="text-center">${result.method}</td>
-				<td class="text-center"><span class="badge ${statusClass}">${result.status}</span></td>
-				<td><span class="${resultBadge}">${resultText}</span></td>
-			</tr>`;
-		});
-
-		html += '</tbody></table></div>';
-	} else {
-		html += '<div class="alert alert-info">No HTTP manipulation tests performed.</div>';
+// Toggle all categories - switches between all selected and none selected
+function toggleAllCategories() {
+	const checkboxes = document.querySelectorAll('#categoryCheckboxes input[type=checkbox]');
+	const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+	const toggleBtn = document.getElementById('toggleAllCategoriesBtn');
+	
+	checkboxes.forEach((cb) => {
+		cb.checked = !allChecked;
+	});
+	
+	// Update button icon
+	if (toggleBtn) {
+		const svg = toggleBtn.querySelector('svg');
+		if (svg) {
+			if (allChecked) {
+				// Show "select all" icon (list with checks)
+				svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>';
+			} else {
+				// Show "deselect all" icon (X marks)
+				svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>';
+			}
+		}
 	}
-
-	html += '</div></div>';
-	resultsDiv.innerHTML = html + resultsDiv.innerHTML;
 }
 
 // Initialize application
 function initApp() {
-	setTheme(getPreferredTheme());
-	document.getElementById('themeToggle').addEventListener('click', function () {
-		const current = document.body.getAttribute('data-theme') || getPreferredTheme();
-		setTheme(current === 'dark' ? 'light' : 'dark');
-	});
+	// Force dark theme
+	document.body.setAttribute('data-theme', 'dark');
 	renderCategoryCheckboxes();
-	// --- Кнопки select all/deselect all ---
-	const selectAllBtn = document.getElementById('selectAllCategoriesBtn');
-	const deselectAllBtn = document.getElementById('deselectAllCategoriesBtn');
-	if (selectAllBtn) {
-		selectAllBtn.addEventListener('click', function () {
-			const checkboxes = document.querySelectorAll('#categoryCheckboxes input[type=checkbox]');
-			checkboxes.forEach((cb) => {
-				cb.checked = true;
-			});
-		});
-	}
-	if (deselectAllBtn) {
-		deselectAllBtn.addEventListener('click', function () {
-			const checkboxes = document.querySelectorAll('#categoryCheckboxes input[type=checkbox]');
-			checkboxes.forEach((cb) => {
-				cb.checked = false;
-			});
-		});
-	}
 	// --- Enter в поле URL ---
 	const urlInput = document.getElementById('url');
 	if (urlInput) {
@@ -863,11 +1559,12 @@ function initApp() {
 	// Update description based on false positive test state
 	updateDescriptionText();
 	// --- Toggle payload template section on method change ---
-	const methodCheckboxes = document.querySelectorAll('#methodCheckboxes input[type=checkbox]');
+	const methodCheckboxes = document.querySelectorAll('.methods-grid input[type=checkbox]');
 	methodCheckboxes.forEach((cb) => {
 		cb.addEventListener('change', updatePayloadTemplateSection);
 	});
 	updatePayloadTemplateSection();
+	
 	// Делегированный обработчик на #results
 	const resultsDiv = document.getElementById('results');
 	if (resultsDiv) {
@@ -943,16 +1640,14 @@ function hideExportControls() {
 
 function exportResults(format) {
 	if (!currentTestSession) {
-		alert('No test results to export');
+		showAlert('No test results to export', 'Warning', 'warning');
 		return;
 	}
-
-	const includeAnalysis = document.getElementById('includeAnalysis')?.checked || true;
 
 	try {
 		switch (format) {
 			case 'json':
-				exportAsJSON(currentTestSession, includeAnalysis);
+				exportAsJSON(currentTestSession, true);
 				break;
 			case 'csv':
 				exportAsCSV(currentTestSession.results);
@@ -961,11 +1656,11 @@ function exportResults(format) {
 				exportAsHTMLReport(currentTestSession);
 				break;
 			default:
-				alert('Unknown export format');
+				showAlert('Unknown export format', 'Error', 'error');
 		}
 	} catch (error) {
 		console.error('Export failed:', error);
-		alert('Export failed. Please check the console for details.');
+		showAlert('Export failed. Please check the console for details.', 'Error', 'error');
 	}
 }
 
@@ -993,7 +1688,7 @@ function exportAsJSON(session, includeAnalysis) {
 
 function exportAsCSV(results) {
 	if (results.length === 0) {
-		alert('No results to export');
+		showAlert('No results to export', 'Warning', 'warning');
 		return;
 	}
 
@@ -1041,145 +1736,443 @@ function exportAsHTMLReport(session) {
 	const filename = generateFilename(session.url, 'html');
 	downloadFile(html, filename, 'text/html');
 
-	alert("HTML report downloaded. Use your browser's Print to PDF feature to create a PDF.");
+	showAlert("HTML report downloaded. Use your browser's Print to PDF feature to create a PDF.", 'Success', 'success');
 }
 
 function generateHTMLReport(session, vulnerabilityScores, executiveSummary) {
 	const getRiskColor = (risk) => {
 		switch (risk) {
 			case 'Critical':
-				return '#dc3545';
+				return '#ff3860';
 			case 'High':
-				return '#fd7e14';
+				return '#ffb347';
 			case 'Medium':
-				return '#ffc107';
+				return '#60a5fa';
 			case 'Low':
-				return '#198754';
+				return '#00ff9d';
 			default:
-				return '#6c757d';
+				return '#6b7280';
 		}
 	};
 
+	const getStatusColor = (status, falsePositiveMode = false) => {
+		const statusStr = String(status);
+		const codeNum = parseInt(statusStr, 10);
+		
+		if (isNaN(codeNum)) {
+			return 'rgba(249, 115, 22, 0.2)'; // Orange for errors
+		}
+		
+		if (falsePositiveMode) {
+			if (codeNum >= 200 && codeNum < 300) {
+				return 'rgba(34, 197, 94, 0.2)'; // Green for allowed
+			} else if (codeNum === 403) {
+				return 'rgba(239, 68, 68, 0.2)'; // Red for blocked
+			}
+		} else {
+			if (codeNum === 403) {
+				return 'rgba(34, 197, 94, 0.2)'; // Green for protected
+			} else if (codeNum >= 200 && codeNum < 300) {
+				return 'rgba(239, 68, 68, 0.2)'; // Red for vulnerable
+			}
+		}
+		
+		if (codeNum >= 300 && codeNum < 400) {
+			return 'rgba(249, 115, 22, 0.2)'; // Orange for redirects
+		}
+		
+		return 'rgba(107, 114, 128, 0.1)'; // Gray for others
+	};
+
+	const getStatusBorderColor = (status, falsePositiveMode = false) => {
+		const statusStr = String(status);
+		const codeNum = parseInt(statusStr, 10);
+		
+		if (isNaN(codeNum)) {
+			return '#f97316'; // Orange
+		}
+		
+		if (falsePositiveMode) {
+			if (codeNum >= 200 && codeNum < 300) {
+				return '#22c55e'; // Green
+			} else if (codeNum === 403) {
+				return '#ef4444'; // Red
+			}
+		} else {
+			if (codeNum === 403) {
+				return '#22c55e'; // Green
+			} else if (codeNum >= 200 && codeNum < 300) {
+				return '#ef4444'; // Red
+			}
+		}
+		
+		if (codeNum >= 300 && codeNum < 400) {
+			return '#f97316'; // Orange
+		}
+		
+		return '#6b7280'; // Gray
+	};
+
+	const startDate = new Date(session.startTime);
+	const endDate = new Date(session.endTime);
+	const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+	const startTimeStr = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+	const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+	const duration = Math.round((endDate - startDate) / 1000);
+	const falsePositiveMode = session.settings?.falsePositiveTest || false;
+
 	return `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WAF Security Assessment Report</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #007bff; padding-bottom: 20px; }
-        .summary-card { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .risk-badge { padding: 4px 12px; border-radius: 4px; color: white; font-weight: bold; }
-        .metric { display: inline-block; margin: 10px 20px; text-align: center; }
-        .metric-value { font-size: 2em; font-weight: bold; color: #007bff; }
-        .metric-label { font-size: 0.9em; color: #666; }
-        .vulnerability-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .vulnerability-table th, .vulnerability-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        .vulnerability-table th { background-color: #f8f9fa; font-weight: bold; }
-        .severity-critical { color: #dc3545; font-weight: bold; }
-        .severity-high { color: #fd7e14; font-weight: bold; }
-        .severity-medium { color: #ffc107; font-weight: bold; }
-        .severity-low { color: #198754; font-weight: bold; }
-        .recommendations { background: #e7f3ff; padding: 20px; border-left: 4px solid #007bff; }
-        .results-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        .results-table th, .results-table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-        .results-table th { background-color: #f8f9fa; }
-        .status-200 { background-color: #f8d7da; }
-        .status-403 { background-color: #d1e7dd; }
-        .status-other { background-color: #fff3cd; }
-        .page-break { page-break-before: always; }
-        @media print { .page-break { page-break-before: always; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0a0e14 0%, #0f1629 50%, #0a0e14 100%);
+            color: #e5e7eb;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #161b22 0%, #1c2128 100%);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00d9ff;
+            margin-bottom: 20px;
+        }
+        .header-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        .info-item {
+            background: rgba(0, 217, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 217, 255, 0.2);
+        }
+        .info-label {
+            font-size: 12px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #ffffff;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #00d9ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .metric-card {
+            background: rgba(0, 217, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #00d9ff;
+            margin-bottom: 8px;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            background-color: ${getRiskColor(executiveSummary.riskLevel)};
+            margin: 20px 0;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        thead {
+            background: rgba(0, 217, 255, 0.1);
+        }
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(0, 217, 255, 0.3);
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.1);
+            color: #e5e7eb;
+        }
+        tbody tr:hover {
+            background: rgba(0, 217, 255, 0.05);
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .severity-critical { background: rgba(255, 56, 96, 0.2); color: #ff3860; }
+        .severity-high { background: rgba(255, 179, 71, 0.2); color: #ffb347; }
+        .severity-medium { background: rgba(96, 165, 250, 0.2); color: #60a5fa; }
+        .severity-low { background: rgba(0, 255, 157, 0.2); color: #00ff9d; }
+        .recommendations {
+            background: rgba(0, 217, 255, 0.05);
+            border-left: 4px solid #00d9ff;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .recommendations ol {
+            margin-left: 20px;
+            color: #d1d5db;
+        }
+        .recommendations li {
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+        .results-section {
+            margin-top: 40px;
+        }
+        .result-row {
+            border-left: 4px solid;
+            transition: all 0.2s;
+        }
+        .status-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .payload {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #9ca3af;
+            word-break: break-all;
+            max-width: 500px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(0, 217, 255, 0.2);
+            color: #6b7280;
+            font-size: 12px;
+        }
+        @media print {
+            body { background: #0a0e14; }
+            .page-break { page-break-before: always; }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>WAF Security Assessment Report</h1>
-        <p><strong>Target URL:</strong> ${session.url}</p>
-        <p><strong>Test Date:</strong> ${new Date(session.startTime).toLocaleString()}</p>
-        <p><strong>Duration:</strong> ${Math.round((new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 1000)}s</p>
-    </div>
-
-    <div class="summary-card">
-        <h2>Executive Summary</h2>
-        <div style="text-align: center; margin: 20px 0;">
-            <span class="risk-badge" style="background-color: ${getRiskColor(executiveSummary.riskLevel)}">
-                ${executiveSummary.riskLevel} Risk Level
-            </span>
-        </div>
-
-        <div style="text-align: center;">
-            <div class="metric">
-                <div class="metric-value">${executiveSummary.overallScore}</div>
-                <div class="metric-label">Security Score</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value">${executiveSummary.wafEffectiveness}%</div>
-                <div class="metric-label">WAF Effectiveness</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value">${executiveSummary.bypassedTests}</div>
-                <div class="metric-label">Bypassed Tests</div>
-            </div>
-            <div class="metric">
-                <div class="metric-value">${executiveSummary.totalTests}</div>
-                <div class="metric-label">Total Tests</div>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ WAF Security Assessment Report</h1>
+            <div class="header-info">
+                <div class="info-item">
+                    <div class="info-label">Target URL</div>
+                    <div class="info-value">${escapeHtml(session.url)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Test Date</div>
+                    <div class="info-value">${dateStr}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Test Time</div>
+                    <div class="info-value">${startTimeStr} - ${endTimeStr}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Duration</div>
+                    <div class="info-value">${duration} seconds</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    ${
+        <div class="card">
+            <h2 class="card-title">📊 Executive Summary</h2>
+            <div style="text-align: center;">
+                <span class="risk-badge">${executiveSummary.riskLevel} Risk Level</span>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">${executiveSummary.overallScore}</div>
+                    <div class="metric-label">Security Score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: ${executiveSummary.wafEffectiveness < 75 ? '#ffb347' : '#00ff9d'}">${executiveSummary.wafEffectiveness}%</div>
+                    <div class="metric-label">WAF Effectiveness</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: ${executiveSummary.bypassedTests > 0 ? '#ff3860' : '#00ff9d'}">${executiveSummary.bypassedTests}</div>
+                    <div class="metric-label">Bypassed Tests</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${executiveSummary.totalTests}</div>
+                    <div class="metric-label">Total Tests</div>
+                </div>
+            </div>
+        </div>
+
+        ${
 			session.wafDetection?.detected
 				? `
-    <div class="summary-card">
-        <h3>WAF Detection Results</h3>
-        <p><strong>Detected WAF:</strong> ${session.wafDetection.wafType}</p>
-        <p><strong>Confidence:</strong> ${session.wafDetection.confidence}%</p>
-    </div>
-    `
+        <div class="card">
+            <h2 class="card-title">🔍 WAF Detection</h2>
+            <div class="info-item" style="max-width: 500px;">
+                <div class="info-label">Detected WAF</div>
+                <div class="info-value">${escapeHtml(session.wafDetection.wafType)}</div>
+            </div>
+            <div class="info-item" style="max-width: 500px; margin-top: 15px;">
+                <div class="info-label">Confidence</div>
+                <div class="info-value">${session.wafDetection.confidence}%</div>
+            </div>
+        </div>
+        `
 				: ''
 		}
 
-    <div class="summary-card">
-        <h3>Vulnerability Assessment</h3>
-        <table class="vulnerability-table">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th>Severity</th>
-                    <th>Score</th>
-                    <th>Bypass Rate</th>
-                    <th>Tests (Bypassed/Total)</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${vulnerabilityScores
+        <div class="card">
+            <h2 class="card-title">📋 Vulnerability Assessment</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Severity</th>
+                            <th>Score</th>
+                            <th>Bypass Rate</th>
+                            <th>Tests (Bypassed/Total)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${vulnerabilityScores
 									.map(
 										(vuln) => `
-                <tr>
-                    <td>${vuln.category}</td>
-                    <td class="severity-${vuln.severity.toLowerCase()}">${vuln.severity}</td>
-                    <td>${vuln.score}/100</td>
-                    <td>${vuln.bypassRate}%</td>
-                    <td>${vuln.bypassedCount}/${vuln.totalCount}</td>
-                </tr>
-                `,
+                        <tr>
+                            <td><strong>${escapeHtml(vuln.category)}</strong></td>
+                            <td><span class="severity-badge severity-${vuln.severity.toLowerCase()}">${vuln.severity}</span></td>
+                            <td>${vuln.score}/100</td>
+                            <td style="color: ${vuln.bypassRate > 50 ? '#ff3860' : vuln.bypassRate > 20 ? '#ffb347' : '#00ff9d'}; font-weight: 700;">${vuln.bypassRate}%</td>
+                            <td>${vuln.bypassedCount}/${vuln.totalCount}</td>
+                        </tr>
+                        `,
 									)
 									.join('')}
-            </tbody>
-        </table>
-    </div>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    <div class="recommendations">
-        <h3>Recommendations</h3>
-        <ol>
-            ${executiveSummary.recommendations.map((rec) => `<li>${rec}</li>`).join('')}
-        </ol>
-    </div>
+        <div class="card">
+            <h2 class="card-title">💡 Recommendations</h2>
+            <div class="recommendations">
+                <ol>
+                    ${executiveSummary.recommendations.map((rec) => `<li>${escapeHtml(rec)}</li>`).join('')}
+                </ol>
+            </div>
+        </div>
 
-    <p style="margin-top: 40px; text-align: center; color: #666; font-size: 0.9em;">
-        Generated by WAF Checker on ${new Date().toLocaleString()}
-    </p>
+        <div class="card results-section">
+            <h2 class="card-title">📝 Detailed Test Results</h2>
+            <p style="color: #9ca3af; margin-bottom: 20px; font-size: 14px;">
+                Complete list of all ${session.results.length} test requests executed during the security assessment.
+            </p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Category</th>
+                            <th style="width: 10%;">Method</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 10%;">Time</th>
+                            <th style="width: 50%;">Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${session.results
+									.map((result) => {
+										const statusStr = String(result.status);
+										const bgColor = getStatusColor(statusStr, falsePositiveMode);
+										const borderColor = getStatusBorderColor(statusStr, falsePositiveMode);
+										const statusClass = statusStr === '403' ? 'text-cyber-success' : 
+														  (statusStr === '200' || statusStr === '201' || statusStr === '204') ? 'text-cyber-danger' : 
+														  'text-orange-400';
+										return `
+                        <tr class="result-row" style="background-color: ${bgColor}; border-left-color: ${borderColor};">
+                            <td><strong>${escapeHtml(result.category || 'N/A')}</strong></td>
+                            <td style="font-family: 'JetBrains Mono', monospace; color: #00d9ff;">${escapeHtml(result.method || 'N/A')}</td>
+                            <td><span class="status-code" style="color: ${statusClass === 'text-cyber-success' ? '#00ff9d' : statusClass === 'text-cyber-danger' ? '#ff3860' : '#ffb347'};">${escapeHtml(statusStr)}</span></td>
+                            <td style="color: #9ca3af;">${result.responseTime || 0}ms</td>
+                            <td><span class="payload">${escapeHtml(result.payload || 'N/A')}</span></td>
+                        </tr>
+                        `;
+									})
+									.join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Generated by WAF-CHECKER.COM by <a href="https://mickaelasseline.com" style="color: #00d9ff; text-decoration: none;">Mickael Asseline</a> • ${new Date().toLocaleString()}</p>
+        </div>
+    </div>
 </body>
 </html>
     `;
@@ -1300,115 +2293,377 @@ function generateExecutiveSummary(results, vulnerabilityScores, wafDetection) {
 
 function showAnalytics() {
 	if (!currentTestSession) {
-		alert('No test results to analyze');
+		showAlert('No test results to analyze', 'Warning', 'warning');
 		return;
 	}
 
 	const vulnerabilityScores = generateVulnerabilityScores(currentTestSession.results, currentTestSession.settings.falsePositiveTest);
 	const executiveSummary = generateExecutiveSummary(currentTestSession.results, vulnerabilityScores, currentTestSession.wafDetection);
 
-	const dashboard = document.getElementById('analyticsDashboard');
+	const modal = document.getElementById('analyticsModal');
 	const content = document.getElementById('analyticsContent');
 
-	if (!dashboard || !content) return;
+	if (!modal || !content) return;
 
 	content.innerHTML = generateAnalyticsHTML(currentTestSession, vulnerabilityScores, executiveSummary);
-	dashboard.style.display = 'block';
+	modal.style.display = 'flex';
+	document.body.style.overflow = 'hidden';
 }
 
 function hideAnalytics() {
-	const dashboard = document.getElementById('analyticsDashboard');
-	if (dashboard) {
-		dashboard.style.display = 'none';
+	const modal = document.getElementById('analyticsModal');
+	if (modal) {
+		modal.style.display = 'none';
+		document.body.style.overflow = '';
+	}
+}
+
+async function exportAnalyticsScreenshot(event) {
+	const content = document.getElementById('analyticsContent');
+	if (!content) {
+		showAlert('No analytics content to export', 'Warning', 'warning');
+		return;
+	}
+
+	let btn = null;
+	let oldText = '';
+	
+	try {
+		// Show loading state
+		if (event && event.target) {
+			btn = event.target.closest('button');
+			if (btn) {
+				oldText = btn.innerHTML;
+				btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Exporting...`;
+				btn.disabled = true;
+			}
+		}
+
+		// Wait a moment for any animations to complete
+		await new Promise(resolve => setTimeout(resolve, 300));
+
+		// Create a wrapper for better capture
+		const wrapper = document.createElement('div');
+		const contentWidth = Math.max(content.scrollWidth || 1200, 1200);
+		wrapper.style.cssText = `
+			background: linear-gradient(135deg, #0a0e1a 0%, #0f1629 50%, #0a0e1a 100%);
+			padding: 40px;
+			width: ${contentWidth + 80}px;
+			position: fixed;
+			left: 0;
+			top: 0;
+			visibility: hidden;
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			z-index: -9999;
+		`;
+		
+		// Add header to screenshot
+		const header = document.createElement('div');
+		const now = new Date();
+		const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+		const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+		header.innerHTML = `
+			<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid rgba(0, 255, 255, 0.3);">
+				<div style="width: 50px; height: 50px; background: rgba(0, 255, 255, 0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00ffff" stroke-width="2">
+						<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+					</svg>
+				</div>
+				<div>
+					<div style="font-size: 22px; font-weight: bold; color: white; font-family: system-ui, -apple-system, sans-serif; margin-bottom: 4px;">WAF Security Analytics</div>
+					<div style="font-size: 13px; color: #9ca3af; font-family: system-ui, -apple-system, sans-serif;">Generated by WAF-CHECKER.COM • ${dateStr} at ${timeStr}</div>
+				</div>
+			</div>
+		`;
+		wrapper.appendChild(header);
+		
+		// Clone the content
+		const clone = content.cloneNode(true);
+		clone.style.cssText = `
+			max-width: 100%;
+			width: ${contentWidth}px;
+			margin: 0 auto;
+		`;
+		
+		// Ensure all computed styles are applied for screenshot
+		wrapper.appendChild(clone);
+		
+		// Add footer
+		const footer = document.createElement('div');
+		footer.innerHTML = `
+			<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(0, 255, 255, 0.2); text-align: center;">
+				<span style="font-size: 12px; color: #6b7280; font-family: system-ui, -apple-system, sans-serif;">WAF-CHECKER.COM by Mickael Asseline</span>
+			</div>
+		`;
+		wrapper.appendChild(footer);
+		
+		document.body.appendChild(wrapper);
+
+		// Wait for layout to settle and ensure fonts are loaded
+		await new Promise(resolve => setTimeout(resolve, 500));
+		
+		// Make wrapper visible temporarily for capture
+		wrapper.style.visibility = 'visible';
+		wrapper.style.position = 'fixed';
+		wrapper.style.left = '0';
+		wrapper.style.top = '0';
+		
+		// Force a reflow to ensure all styles are computed
+		const height = wrapper.offsetHeight;
+		const width = wrapper.offsetWidth;
+
+		// Capture the wrapper
+		const canvas = await html2canvas(wrapper, {
+			backgroundColor: '#0a0e1a',
+			scale: 2,
+			useCORS: true,
+			logging: false,
+			allowTaint: true,
+			width: width,
+			height: height,
+			foreignObjectRendering: true,
+			onclone: (clonedDoc) => {
+				// Apply computed styles to cloned elements
+				const clonedWrapper = clonedDoc.body.querySelector('div');
+				if (clonedWrapper) {
+					clonedWrapper.style.position = 'relative';
+					clonedWrapper.style.left = '0';
+					clonedWrapper.style.top = '0';
+					clonedWrapper.style.visibility = 'visible';
+				}
+			}
+		});
+		
+		// Remove wrapper
+		document.body.removeChild(wrapper);
+
+		// Convert to blob
+		canvas.toBlob(async (blob) => {
+			if (!blob) {
+				throw new Error('Failed to create blob from canvas');
+			}
+
+			// Download the file
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			
+			// Generate filename with timestamp
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+			let hostname = 'analytics';
+			try {
+				hostname = new URL(currentTestSession?.url || '').hostname.replace(/[^a-zA-Z0-9.-]/g, '_');
+			} catch {}
+			link.download = `waf-analytics_${hostname}_${timestamp}.png`;
+			
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+
+			// Copy to clipboard
+			let clipboardSuccess = false;
+			try {
+				// Check if ClipboardItem is supported
+				if (typeof ClipboardItem !== 'undefined' && navigator.clipboard && navigator.clipboard.write) {
+					// Create clipboard item with blob promise
+					const clipboardItem = new ClipboardItem({ 'image/png': Promise.resolve(blob) });
+					await navigator.clipboard.write([clipboardItem]);
+					clipboardSuccess = true;
+				} else {
+					throw new Error('ClipboardItem not supported');
+				}
+			} catch (clipboardError) {
+				console.warn('Clipboard copy failed:', clipboardError);
+				// ClipboardItem might not be supported, that's okay
+			}
+
+			// Restore button
+			if (btn) {
+				btn.innerHTML = oldText;
+				btn.disabled = false;
+			}
+
+			// Show success message
+			if (clipboardSuccess) {
+				showAlert('Analytics screenshot exported and copied to clipboard!', 'Success', 'success');
+			} else {
+				showAlert('Analytics screenshot exported successfully! (Clipboard copy requires HTTPS)', 'Success', 'success');
+			}
+		}, 'image/png');
+
+	} catch (error) {
+		console.error('Screenshot export failed:', error);
+		showAlert(`Failed to export screenshot: ${error.message}`, 'Error', 'error');
+		
+		// Restore button
+		if (btn) {
+			btn.innerHTML = oldText;
+			btn.disabled = false;
+		}
 	}
 }
 
 function generateAnalyticsHTML(session, vulnerabilityScores, summary) {
+	// Format date and time
+	const startDate = new Date(session.startTime);
+	const endDate = new Date(session.endTime);
+	const dateStr = startDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+	const startTimeStr = startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+	const endTimeStr = endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+	const duration = Math.round((endDate - startDate) / 1000);
+	
+	// Risk level styling
+	const riskColors = {
+		'Critical': 'bg-cyber-danger/20 text-cyber-danger border-cyber-danger/30',
+		'High': 'bg-cyber-warning/20 text-cyber-warning border-cyber-warning/30',
+		'Medium': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+		'Low': 'bg-cyber-success/20 text-cyber-success border-cyber-success/30'
+	};
+	const riskStyle = riskColors[summary.riskLevel] || riskColors['Low'];
+	
 	return `
-		<div class="row">
-			<div class="col-md-6">
-				<div class="card">
-					<div class="card-header"><h6>📊 Test Overview</h6></div>
-					<div class="card-body">
-						<div class="d-flex justify-content-between">
-							<span>Total Tests:</span>
-							<strong>${summary.totalTests}</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>Bypassed:</span>
-							<strong class="${summary.bypassedTests > 0 ? 'text-danger' : 'text-success'}">${summary.bypassedTests}</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>WAF Effectiveness:</span>
-							<strong class="${summary.wafEffectiveness < 75 ? 'text-warning' : 'text-success'}">${summary.wafEffectiveness}%</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>Risk Level:</span>
-							<span class="badge bg-${summary.riskLevel === 'Critical' ? 'danger' : summary.riskLevel === 'High' ? 'warning' : summary.riskLevel === 'Medium' ? 'info' : 'success'}">${summary.riskLevel}</span>
-						</div>
-					</div>
+		<!-- Test Info Header -->
+		<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-4 mb-4">
+			<div class="flex items-center gap-3 mb-3">
+				<div class="w-10 h-10 rounded-lg bg-cyber-accent/20 flex items-center justify-center">
+					<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+					</svg>
+				</div>
+				<div>
+					<h3 class="text-sm font-bold text-white">Security Analysis Report</h3>
+					<p class="text-xs text-gray-400">Detailed vulnerability assessment</p>
 				</div>
 			</div>
-			<div class="col-md-6">
-				<div class="card">
-					<div class="card-header"><h6>🛡️ Vulnerability Breakdown</h6></div>
-					<div class="card-body">
-						<div class="d-flex justify-content-between">
-							<span>Critical:</span>
-							<strong class="text-danger">${summary.criticalVulnerabilities}</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>High:</span>
-							<strong class="text-warning">${summary.highVulnerabilities}</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>Medium:</span>
-							<strong class="text-info">${summary.mediumVulnerabilities}</strong>
-						</div>
-						<div class="d-flex justify-content-between">
-							<span>Low:</span>
-							<strong class="text-success">${summary.lowVulnerabilities}</strong>
-						</div>
-					</div>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+				<div class="bg-cyber-elevated/50 rounded-lg p-3">
+					<div class="text-gray-400 mb-1">Target URL</div>
+					<div class="text-cyber-accent font-mono truncate" title="${escapeHtml(session.url)}">${escapeHtml(session.url)}</div>
+				</div>
+				<div class="bg-cyber-elevated/50 rounded-lg p-3">
+					<div class="text-gray-400 mb-1">Date</div>
+					<div class="text-white font-medium">${dateStr}</div>
+				</div>
+				<div class="bg-cyber-elevated/50 rounded-lg p-3">
+					<div class="text-gray-400 mb-1">Time</div>
+					<div class="text-white font-medium">${startTimeStr} - ${endTimeStr} <span class="text-gray-500">(${duration}s)</span></div>
 				</div>
 			</div>
 		</div>
 
-		<div class="mt-3">
-			<h6>🎯 Category Analysis</h6>
-			<div class="table-responsive">
-				<table class="table table-sm">
+		<!-- Stats Grid -->
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+			<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-4 text-center">
+				<div class="text-2xl font-bold text-white mb-1">${summary.totalTests}</div>
+				<div class="text-xs text-gray-400 uppercase tracking-wider">Total Tests</div>
+			</div>
+			<div class="bg-cyber-card border border-cyber-danger/20 rounded-xl p-4 text-center">
+				<div class="text-2xl font-bold ${summary.bypassedTests > 0 ? 'text-cyber-danger' : 'text-cyber-success'} mb-1">${summary.bypassedTests}</div>
+				<div class="text-xs text-gray-400 uppercase tracking-wider">Bypassed</div>
+			</div>
+			<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-4 text-center">
+				<div class="text-2xl font-bold ${summary.wafEffectiveness < 75 ? 'text-cyber-warning' : 'text-cyber-success'} mb-1">${summary.wafEffectiveness}%</div>
+				<div class="text-xs text-gray-400 uppercase tracking-wider">WAF Effectiveness</div>
+			</div>
+			<div class="bg-cyber-card border ${riskStyle} rounded-xl p-4 text-center">
+				<div class="text-lg font-bold mb-1">${summary.riskLevel}</div>
+				<div class="text-xs text-gray-400 uppercase tracking-wider">Risk Level</div>
+			</div>
+		</div>
+
+		<!-- Two Column Layout -->
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+			<!-- Vulnerability Breakdown -->
+			<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl overflow-hidden">
+				<div class="px-4 py-3 border-b border-cyber-accent/20 bg-cyber-elevated/30">
+					<h4 class="text-sm font-bold text-white">Vulnerability Breakdown</h4>
+				</div>
+				<div class="p-4 space-y-3">
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-300">Critical</span>
+						<span class="px-2 py-0.5 bg-cyber-danger/20 text-cyber-danger text-xs font-bold rounded">${summary.criticalVulnerabilities}</span>
+					</div>
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-300">High</span>
+						<span class="px-2 py-0.5 bg-cyber-warning/20 text-cyber-warning text-xs font-bold rounded">${summary.highVulnerabilities}</span>
+					</div>
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-300">Medium</span>
+						<span class="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">${summary.mediumVulnerabilities}</span>
+					</div>
+					<div class="flex items-center justify-between">
+						<span class="text-sm text-gray-300">Low</span>
+						<span class="px-2 py-0.5 bg-cyber-success/20 text-cyber-success text-xs font-bold rounded">${summary.lowVulnerabilities}</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Recommendations -->
+			<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl overflow-hidden">
+				<div class="px-4 py-3 border-b border-cyber-accent/20 bg-cyber-elevated/30">
+					<h4 class="text-sm font-bold text-white">Recommendations</h4>
+				</div>
+				<div class="p-4">
+					<ul class="space-y-2">
+						${summary.recommendations.map((rec) => `
+							<li class="flex items-start gap-2 text-xs text-gray-300">
+								<svg class="w-4 h-4 text-cyber-accent shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+								</svg>
+								${rec}
+							</li>
+						`).join('')}
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<!-- Category Analysis Table -->
+		<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl overflow-hidden">
+			<div class="px-4 py-3 border-b border-cyber-accent/20 bg-cyber-elevated/30">
+				<h4 class="text-sm font-bold text-white">Category Analysis</h4>
+			</div>
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm" style="table-layout: fixed; width: 100%;">
+					<colgroup>
+						<col style="width: 40%;">
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+						<col style="width: 20%;">
+					</colgroup>
 					<thead>
-						<tr>
-							<th>Category</th>
-							<th>Severity</th>
-							<th>Score</th>
-							<th>Bypass Rate</th>
+						<tr class="border-b border-cyber-accent/20 bg-cyber-elevated/20">
+							<th class="px-4 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-wider" style="text-align: left;">Category</th>
+							<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider" style="text-align: center;">Severity</th>
+							<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider" style="text-align: center;">Score</th>
+							<th class="px-4 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-wider" style="text-align: center;">Bypass Rate</th>
 						</tr>
 					</thead>
-					<tbody>
-						${vulnerabilityScores
-							.map(
-								(vuln) => `
-						<tr>
-							<td>${vuln.category}</td>
-							<td><span class="badge bg-${vuln.severity === 'Critical' ? 'danger' : vuln.severity === 'High' ? 'warning' : vuln.severity === 'Medium' ? 'info' : 'success'}">${vuln.severity}</span></td>
-							<td>${vuln.score}/100</td>
-							<td>${vuln.bypassRate}%</td>
-						</tr>
-						`,
-							)
-							.join('')}
+					<tbody class="divide-y divide-cyber-accent/10">
+						${vulnerabilityScores.map((vuln) => {
+							const severityColors = {
+								'Critical': 'bg-cyber-danger/20 text-cyber-danger',
+								'High': 'bg-cyber-warning/20 text-cyber-warning',
+								'Medium': 'bg-blue-500/20 text-blue-400',
+								'Low': 'bg-cyber-success/20 text-cyber-success'
+							};
+							const sevStyle = severityColors[vuln.severity] || severityColors['Low'];
+							const bypassColor = vuln.bypassRate > 50 ? 'text-cyber-danger' : vuln.bypassRate > 20 ? 'text-cyber-warning' : 'text-cyber-success';
+							return `
+								<tr class="hover:bg-cyber-elevated/30 transition-colors">
+									<td class="px-4 py-2.5 text-gray-300" style="text-align: left; word-wrap: break-word;">${escapeHtml(vuln.category)}</td>
+									<td class="px-4 py-2.5 text-center" style="text-align: center;">
+										<span class="px-2 py-0.5 ${sevStyle} text-xs font-bold rounded">${vuln.severity}</span>
+									</td>
+									<td class="px-4 py-2.5 text-center text-gray-300" style="text-align: center;">${vuln.score}/100</td>
+									<td class="px-4 py-2.5 text-center font-bold ${bypassColor}" style="text-align: center;">${vuln.bypassRate}%</td>
+								</tr>
+							`;
+						}).join('')}
 					</tbody>
 				</table>
 			</div>
-		</div>
-
-		<div class="mt-3">
-			<h6>💡 Recommendations</h6>
-			<ul>
-				${summary.recommendations.map((rec) => `<li>${rec}</li>`).join('')}
-			</ul>
 		</div>
 	`;
 }
@@ -1473,7 +2728,7 @@ async function startBatchTest() {
 		.filter((line) => line.length > 0);
 
 	if (allLines.length === 0) {
-		alert('Please enter at least one URL');
+		showAlert('Please enter at least one URL', 'Warning', 'warning');
 		return;
 	}
 
@@ -1483,14 +2738,12 @@ async function startBatchTest() {
 
 	allLines.forEach((line) => {
 		try {
-			if (!line.startsWith('http://') && !line.startsWith('https://')) {
-				invalidUrls.push(`${line} (must start with http:// or https://)`);
-				return;
-			}
-
-			const url = new URL(line);
+			// Normalize URL by adding https:// if no scheme is present
+			const normalizedUrl = normalizeUrl(line);
+			
+			const url = new URL(normalizedUrl);
 			if (url.protocol === 'http:' || url.protocol === 'https:') {
-				validUrls.push(line);
+				validUrls.push(normalizedUrl);
 			} else {
 				invalidUrls.push(`${line} (unsupported protocol: ${url.protocol})`);
 			}
@@ -1505,18 +2758,19 @@ async function startBatchTest() {
 			invalidUrls.length > 5 ? `\n... and ${invalidUrls.length - 5} more` : ''
 		}\n\nContinue with ${validUrls.length} valid URLs?`;
 
-		if (!confirm(message)) {
+		const confirmed = await showConfirm(message, 'Invalid URLs Found', 'warning');
+		if (!confirmed) {
 			return;
 		}
 	}
 
 	if (validUrls.length === 0) {
-		alert('No valid URLs found. Please check your input.');
+		showAlert('No valid URLs found. Please check your input.', 'Error', 'error');
 		return;
 	}
 
 	if (validUrls.length > 100) {
-		alert('Maximum 100 URLs allowed for batch testing');
+		showAlert('Maximum 100 URLs allowed for batch testing', 'Warning', 'warning');
 		return;
 	}
 
@@ -1607,7 +2861,7 @@ async function startBatchTest() {
 			alertMessage += `\n\nDetails:${details}`;
 		}
 
-		alert(alertMessage);
+		showAlert(alertMessage, 'Batch Test Complete', 'success');
 
 		// Reset UI state
 		document.getElementById('batchProgress').style.display = 'none';
@@ -1742,6 +2996,17 @@ async function testSingleUrlClient(url, config) {
 	const methods = config.methods || ['GET'];
 	const categories = config.categories || ['SQL Injection', 'XSS'];
 
+	// Get custom payloads from localStorage
+	let customPayloadsData = {};
+	try {
+		const stored = localStorage.getItem('wafchecker_customPayloads');
+		if (stored) {
+			customPayloadsData = JSON.parse(stored);
+		}
+	} catch (e) {
+		console.warn('Failed to load custom payloads:', e);
+	}
+
 	let allResults = [];
 	let page = 0;
 
@@ -1767,6 +3032,7 @@ async function testSingleUrlClient(url, config) {
 			body: JSON.stringify({
 				payloadTemplate: config.payloadTemplate || '',
 				customHeaders: config.customHeaders || '',
+				customPayloads: customPayloadsData,
 			}),
 		});
 
@@ -1880,7 +3146,7 @@ function displayBatchResults(job) {
 
 function exportBatchResults() {
 	if (!currentBatchJob || !currentBatchJob.results) {
-		alert('No batch results to export');
+		showAlert('No batch results to export', 'Warning', 'warning');
 		return;
 	}
 
@@ -1939,12 +3205,10 @@ function validateBatchUrls() {
 
 	lines.forEach((line) => {
 		try {
-			if (line.startsWith('http://') || line.startsWith('https://')) {
-				new URL(line);
-				validCount++;
-			} else {
-				invalidCount++;
-			}
+			// Normalize URL by adding https:// if no scheme is present
+			const normalizedUrl = normalizeUrl(line);
+			new URL(normalizedUrl);
+			validCount++;
 		} catch (error) {
 			invalidCount++;
 		}
@@ -1955,13 +3219,13 @@ function validateBatchUrls() {
 	if (startBtn) {
 		if (validCount === 0 && lines.length > 0) {
 			startBtn.disabled = true;
-			startBtn.textContent = '❌ No Valid URLs';
+			startBtn.textContent = 'No Valid URLs';
 		} else if (validCount > 100) {
 			startBtn.disabled = true;
-			startBtn.textContent = `❌ Too Many URLs (${validCount}/100)`;
+			startBtn.textContent = `Too Many URLs (${validCount}/100)`;
 		} else {
 			startBtn.disabled = false;
-			startBtn.textContent = validCount > 0 ? `▶️ Start Batch Test (${validCount} URLs)` : '▶️ Start Batch Test';
+			startBtn.textContent = validCount > 0 ? `Start Batch Test (${validCount} URLs)` : 'Start Batch Test';
 		}
 	}
 
@@ -1980,3 +3244,687 @@ function validateBatchUrls() {
 		urlsTextarea.title = '';
 	}
 }
+
+// ===========================================
+// TEST CONFIGURATION MODAL
+// ===========================================
+
+let testConfigModal = null;
+let currentEditingCategory = null;
+let customPayloads = {};
+let defaultPayloads = {};
+let defaultPayloadsLoaded = false;
+
+// Initialize custom payloads from localStorage
+function initCustomPayloads() {
+	const stored = localStorage.getItem('wafchecker_customPayloads');
+	if (stored) {
+		try {
+			customPayloads = JSON.parse(stored);
+		} catch (e) {
+			customPayloads = {};
+		}
+	}
+}
+
+// Load default payloads from server
+async function loadDefaultPayloads() {
+	if (defaultPayloadsLoaded) return;
+	
+	try {
+		const response = await fetch('/api/payloads');
+		if (response.ok) {
+			defaultPayloads = await response.json();
+			defaultPayloadsLoaded = true;
+			
+			// Update PAYLOAD_CATEGORIES with any new categories from server
+			const serverCategories = Object.keys(defaultPayloads);
+			serverCategories.forEach(cat => {
+				if (!PAYLOAD_CATEGORIES.includes(cat)) {
+					PAYLOAD_CATEGORIES.push(cat);
+				}
+			});
+		}
+	} catch (e) {
+		console.error('Failed to load default payloads:', e);
+	}
+}
+
+// Show test configuration modal
+async function showTestConfigModal() {
+	initCustomPayloads();
+	
+	// Show modal first with loading state
+	if (!testConfigModal) {
+		testConfigModal = new bootstrap.Modal(document.getElementById('testConfigModal'));
+	}
+	
+	testConfigModal.show();
+	
+	// Show loading state
+	const categoryList = document.getElementById('configCategoryList');
+	if (categoryList) {
+		categoryList.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm">Loading payloads...</div>';
+	}
+	
+	// Load default payloads from server
+	await loadDefaultPayloads();
+	
+	renderConfigCategoryList();
+	showEditorEmpty();
+	updateCustomCount();
+}
+
+// Render category list in sidebar
+function renderConfigCategoryList() {
+	const container = document.getElementById('configCategoryList');
+	if (!container) return;
+	
+	// Combine default payloads, PAYLOAD_CATEGORIES and custom categories
+	const allCategories = new Set([
+		...Object.keys(defaultPayloads),
+		...PAYLOAD_CATEGORIES, 
+		...Object.keys(customPayloads)
+	]);
+	
+	let html = '';
+	allCategories.forEach(cat => {
+		const hasDefault = defaultPayloads[cat] !== undefined;
+		const isCustom = customPayloads[cat] !== undefined;
+		const isDeleted = isCustom && customPayloads[cat]?._deleted;
+		const isModified = isCustom && hasDefault && !isDeleted;
+		const isNew = isCustom && !hasDefault;
+		
+		// Count payloads
+		let payloadCount = 0;
+		if (isCustom && !isDeleted) {
+			payloadCount = (customPayloads[cat].payloads?.length || 0) + (customPayloads[cat].falsePayloads?.length || 0);
+		} else if (hasDefault && !isDeleted) {
+			payloadCount = (defaultPayloads[cat].payloads?.length || 0) + (defaultPayloads[cat].falsePayloads?.length || 0);
+		}
+		
+		let badge = '';
+		if (isDeleted) {
+			badge = '<span class="ml-auto px-1.5 py-0.5 text-[10px] bg-cyber-danger/20 text-cyber-danger rounded">DEL</span>';
+		} else if (isNew) {
+			badge = '<span class="ml-auto px-1.5 py-0.5 text-[10px] bg-cyber-success/20 text-cyber-success rounded">NEW</span>';
+		} else if (isModified) {
+			badge = '<span class="ml-auto px-1.5 py-0.5 text-[10px] bg-cyber-warning/20 text-cyber-warning rounded">MOD</span>';
+		} else {
+			badge = `<span class="ml-auto px-1.5 py-0.5 text-[10px] bg-gray-600/50 text-gray-400 rounded">${payloadCount}</span>`;
+		}
+		
+		const isActive = currentEditingCategory === cat;
+		html += `
+			<button type="button" onclick="selectCategory('${escapeHtml(cat)}')" 
+					class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all ${isActive ? 'bg-cyber-accent/20 text-cyber-accent border border-cyber-accent/50' : 'text-gray-300 hover:bg-cyber-elevated hover:text-white'}">
+				<span class="truncate flex-1">${escapeHtml(cat)}</span>
+				${badge}
+			</button>
+		`;
+	});
+	
+	container.innerHTML = html;
+}
+
+// Show empty editor state
+function showEditorEmpty() {
+	currentEditingCategory = null;
+	document.getElementById('configEditorEmpty').style.display = 'flex';
+	document.getElementById('configEditor').style.display = 'none';
+}
+
+// Switch between Attack and False Positive payload tabs
+function switchPayloadTab(tab) {
+	const tabAttack = document.getElementById('tabAttackPayloads');
+	const tabFalse = document.getElementById('tabFalsePayloads');
+	const panelAttack = document.getElementById('panelAttackPayloads');
+	const panelFalse = document.getElementById('panelFalsePayloads');
+	
+	if (!tabAttack || !tabFalse || !panelAttack || !panelFalse) return;
+	
+	if (tab === 'attack') {
+		tabAttack.classList.add('border-cyber-accent', 'text-cyber-accent');
+		tabAttack.classList.remove('border-transparent', 'text-gray-400');
+		tabFalse.classList.remove('border-blue-400', 'text-blue-400');
+		tabFalse.classList.add('border-transparent', 'text-gray-400');
+		panelAttack.style.display = 'flex';
+		panelFalse.style.display = 'none';
+	} else {
+		tabFalse.classList.add('border-blue-400', 'text-blue-400');
+		tabFalse.classList.remove('border-transparent', 'text-gray-400');
+		tabAttack.classList.remove('border-cyber-accent', 'text-cyber-accent');
+		tabAttack.classList.add('border-transparent', 'text-gray-400');
+		panelAttack.style.display = 'none';
+		panelFalse.style.display = 'flex';
+	}
+}
+
+// Update payload counts in tabs
+function updatePayloadCounts(attackCount, falseCount) {
+	const attackCountEl = document.getElementById('attackPayloadCount');
+	const falseCountEl = document.getElementById('falsePayloadCount');
+	
+	if (attackCountEl) attackCountEl.textContent = attackCount;
+	if (falseCountEl) falseCountEl.textContent = falseCount;
+}
+
+// Select and edit a category
+function selectCategory(categoryName, activeTab = 'attack') {
+	currentEditingCategory = categoryName;
+	
+	document.getElementById('configEditorEmpty').style.display = 'none';
+	document.getElementById('configEditor').style.display = 'flex';
+	
+	// Update category name input
+	document.getElementById('configCategoryName').value = categoryName;
+	
+	// Update badge
+	const badge = document.getElementById('configCategoryBadge');
+	const resetBtn = document.getElementById('configResetBtn');
+	const deleteBtn = document.getElementById('configDeleteBtn');
+	
+	const hasDefault = defaultPayloads[categoryName] !== undefined;
+	const isCustom = customPayloads[categoryName] !== undefined;
+	
+	if (isCustom && customPayloads[categoryName]?._deleted) {
+		badge.textContent = 'Deleted';
+		badge.className = 'px-2 py-0.5 text-xs rounded-full bg-cyber-danger/20 text-cyber-danger';
+		resetBtn.style.display = '';
+		deleteBtn.style.display = 'none';
+	} else if (isCustom && hasDefault) {
+		badge.textContent = 'Modified';
+		badge.className = 'px-2 py-0.5 text-xs rounded-full bg-cyber-warning/20 text-cyber-warning';
+		resetBtn.style.display = '';
+		deleteBtn.style.display = '';
+	} else if (isCustom) {
+		badge.textContent = 'Custom';
+		badge.className = 'px-2 py-0.5 text-xs rounded-full bg-cyber-success/20 text-cyber-success';
+		resetBtn.style.display = 'none';
+		deleteBtn.style.display = '';
+	} else {
+		badge.textContent = 'Default';
+		badge.className = 'px-2 py-0.5 text-xs rounded-full bg-cyber-accent/20 text-cyber-accent';
+		resetBtn.style.display = 'none';
+		deleteBtn.style.display = '';
+	}
+	
+	// Get payloads - prioritize custom, fallback to default
+	let attackPayloads = [];
+	let falsePayloads = [];
+	
+	if (isCustom) {
+		// Use custom payloads if they exist
+		attackPayloads = customPayloads[categoryName].payloads || [];
+		falsePayloads = customPayloads[categoryName].falsePayloads || [];
+	} else if (hasDefault) {
+		// Use default payloads from server
+		attackPayloads = defaultPayloads[categoryName].payloads || [];
+		falsePayloads = defaultPayloads[categoryName].falsePayloads || [];
+	}
+	
+	// All payloads are now editable
+	renderPayloadList('configAttackPayloads', attackPayloads, 'attack', !isCustom);
+	renderPayloadList('configFalsePayloads', falsePayloads, 'false', !isCustom);
+	
+	// Update payload counts in tabs
+	updatePayloadCounts(attackPayloads.length, falsePayloads.length);
+	
+	// Switch to the specified tab (default: attack)
+	switchPayloadTab(activeTab);
+	
+	// Update sidebar selection
+	renderConfigCategoryList();
+}
+
+// Render payload list - all payloads are now editable
+function renderPayloadList(containerId, payloads, type, isDefault = false) {
+	const container = document.getElementById(containerId);
+	if (!container) return;
+	
+	if (payloads.length === 0) {
+		container.innerHTML = `
+			<div class="text-center py-4 text-gray-500 text-sm">
+				No ${type === 'attack' ? 'attack' : 'false positive'} payloads defined.
+				<br><span class="text-xs">Click "+ Add Payload" to create one.</span>
+			</div>
+		`;
+		return;
+	}
+	
+	// Check if this category is modified (has custom payloads)
+	const isModified = !isDefault;
+	const borderClass = isModified ? 'border-cyber-warning/50' : 'border-cyber-accent/20';
+	
+	let html = '';
+	
+	payloads.forEach((payload, index) => {
+		html += `
+			<div class="flex items-center gap-2">
+				<input type="text" value="${escapeHtml(payload)}" 
+					   onfocus="enableEditMode('${type}', ${index})"
+					   onchange="updatePayloadValue('${type}', ${index}, this.value)"
+					   class="flex-1 bg-cyber-elevated border ${borderClass} rounded px-3 py-2 text-sm font-mono text-gray-100 focus:border-cyber-accent focus:ring-1 focus:ring-cyber-accent/30 outline-none" />
+				<button type="button" onclick="removePayload('${type}', ${index})" 
+						class="shrink-0 p-2 text-cyber-danger/60 hover:text-cyber-danger hover:bg-cyber-danger/20 rounded transition-all" title="Remove payload">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+					</svg>
+				</button>
+			</div>
+		`;
+	});
+	
+	container.innerHTML = html;
+}
+
+// Enable edit mode when clicking on a default payload
+function enableEditMode(type, index) {
+	if (!currentEditingCategory) return;
+	
+	// If this is still showing default payloads, copy to custom first
+	if (!customPayloads[currentEditingCategory]) {
+		initCustomFromDefault(currentEditingCategory);
+		renderConfigCategoryList();
+	}
+}
+
+// Initialize custom payloads from default if not exists
+function initCustomFromDefault(categoryName) {
+	if (customPayloads[categoryName]) return; // Already customized
+	
+	const defaultData = defaultPayloads[categoryName];
+	customPayloads[categoryName] = {
+		type: defaultData?.type || 'ParamCheck',
+		payloads: defaultData?.payloads ? [...defaultData.payloads] : [],
+		falsePayloads: defaultData?.falsePayloads ? [...defaultData.falsePayloads] : []
+	};
+}
+
+// Add new payload
+function addPayload(type) {
+	if (!currentEditingCategory) return;
+	
+	// Initialize from default if this is a default category being customized
+	initCustomFromDefault(currentEditingCategory);
+	
+	const key = type === 'attack' ? 'payloads' : 'falsePayloads';
+	if (!customPayloads[currentEditingCategory][key]) {
+		customPayloads[currentEditingCategory][key] = [];
+	}
+	
+	customPayloads[currentEditingCategory][key].push('');
+	selectCategory(currentEditingCategory);
+	updateCustomCount();
+}
+
+// Copy a default payload to custom list for editing
+function copyPayloadToCustom(type, payload) {
+	if (!currentEditingCategory) return;
+	
+	// Initialize from default
+	initCustomFromDefault(currentEditingCategory);
+	
+	// The payload is already copied when we initialized from default
+	// Just refresh the view to show editable state
+	selectCategory(currentEditingCategory);
+	updateCustomCount();
+}
+
+// Update payload value
+function updatePayloadValue(type, index, value) {
+	if (!currentEditingCategory) return;
+	
+	// Copy to custom first if not already
+	if (!customPayloads[currentEditingCategory]) {
+		initCustomFromDefault(currentEditingCategory);
+		renderConfigCategoryList();
+	}
+	
+	const key = type === 'attack' ? 'payloads' : 'falsePayloads';
+	if (customPayloads[currentEditingCategory][key]) {
+		customPayloads[currentEditingCategory][key][index] = value;
+	}
+}
+
+// Remove payload
+function removePayload(type, index) {
+	if (!currentEditingCategory) return;
+	
+	// Copy to custom first if not already
+	if (!customPayloads[currentEditingCategory]) {
+		initCustomFromDefault(currentEditingCategory);
+	}
+	
+	const key = type === 'attack' ? 'payloads' : 'falsePayloads';
+	if (customPayloads[currentEditingCategory][key]) {
+		customPayloads[currentEditingCategory][key].splice(index, 1);
+		// Refresh the category but stay on the same tab
+		selectCategory(currentEditingCategory, type);
+		updateCustomCount();
+	}
+}
+
+// Add new category
+function addNewCategory() {
+	const name = prompt('Enter new category name:');
+	if (!name || name.trim() === '') return;
+	
+	const trimmedName = name.trim();
+	
+	// Check if category already exists
+	if (defaultPayloads[trimmedName] || customPayloads[trimmedName]) {
+		showAlert('A category with this name already exists.', 'Error', 'error');
+		return;
+	}
+	
+	customPayloads[trimmedName] = {
+		type: 'ParamCheck',
+		payloads: [],
+		falsePayloads: []
+	};
+	
+	renderConfigCategoryList();
+	selectCategory(trimmedName);
+	updateCustomCount();
+}
+
+// Delete category (works for all categories)
+async function deleteCategory() {
+	if (!currentEditingCategory) return;
+	
+	const hasDefault = defaultPayloads[currentEditingCategory] !== undefined;
+	
+	if (hasDefault) {
+		const confirmed = await showConfirm(`Delete "${currentEditingCategory}"?\n\nThis will hide this default category from tests. You can restore it by resetting all payloads.`, 'Delete Category', 'danger');
+		if (!confirmed) return;
+		// Mark as deleted by setting empty payloads
+		customPayloads[currentEditingCategory] = {
+			type: defaultPayloads[currentEditingCategory]?.type || 'ParamCheck',
+			payloads: [],
+			falsePayloads: [],
+			_deleted: true
+		};
+	} else {
+		const confirmed = await showConfirm(`Are you sure you want to delete "${currentEditingCategory}"?`, 'Delete Category', 'danger');
+		if (!confirmed) return;
+		delete customPayloads[currentEditingCategory];
+	}
+	
+	renderConfigCategoryList();
+	showEditorEmpty();
+	updateCustomCount();
+}
+
+// Reset category to default
+async function resetCategoryToDefault() {
+	if (!currentEditingCategory) return;
+	
+	const confirmed = await showConfirm(`Reset "${currentEditingCategory}" to default payloads?`, 'Reset Category', 'warning');
+	if (!confirmed) return;
+	
+	delete customPayloads[currentEditingCategory];
+	localStorage.setItem('wafchecker_customPayloads', JSON.stringify(customPayloads));
+	renderConfigCategoryList();
+	selectCategory(currentEditingCategory);
+	updateCustomCount();
+}
+
+// Reset ALL payloads to defaults
+async function resetAllPayloads() {
+	const confirmed = await showConfirm('Reset ALL payloads to defaults?\n\nThis will remove all your customizations, modifications, and custom categories.', 'Reset All Payloads', 'danger');
+	if (!confirmed) return;
+	
+	customPayloads = {};
+	localStorage.setItem('wafchecker_customPayloads', JSON.stringify(customPayloads));
+	renderConfigCategoryList();
+	showEditorEmpty();
+	updateCustomCount();
+	showAlert('All payloads have been reset to defaults.', 'Success', 'success');
+}
+
+// Update custom payload count
+function updateCustomCount() {
+	const countEl = document.getElementById('configCustomCount');
+	if (!countEl) return;
+	
+	let total = 0;
+	Object.values(customPayloads).forEach(cat => {
+		total += (cat.payloads?.length || 0) + (cat.falsePayloads?.length || 0);
+	});
+	
+	countEl.textContent = total;
+}
+
+// Save test configuration
+function saveTestConfig() {
+	// Update category name if changed
+	if (currentEditingCategory) {
+		const newName = document.getElementById('configCategoryName').value.trim();
+		if (newName && newName !== currentEditingCategory && customPayloads[currentEditingCategory]) {
+			customPayloads[newName] = customPayloads[currentEditingCategory];
+			delete customPayloads[currentEditingCategory];
+			currentEditingCategory = newName;
+		}
+	}
+	
+	// Clean up empty payloads
+	Object.keys(customPayloads).forEach(cat => {
+		if (customPayloads[cat].payloads) {
+			customPayloads[cat].payloads = customPayloads[cat].payloads.filter(p => p.trim() !== '');
+		}
+		if (customPayloads[cat].falsePayloads) {
+			customPayloads[cat].falsePayloads = customPayloads[cat].falsePayloads.filter(p => p.trim() !== '');
+		}
+		
+		// Remove category if empty and not a modification
+		if (!PAYLOAD_CATEGORIES.includes(cat) && 
+			(!customPayloads[cat].payloads || customPayloads[cat].payloads.length === 0) &&
+			(!customPayloads[cat].falsePayloads || customPayloads[cat].falsePayloads.length === 0)) {
+			delete customPayloads[cat];
+		}
+	});
+	
+	// Save to localStorage
+	localStorage.setItem('wafchecker_customPayloads', JSON.stringify(customPayloads));
+	
+	// Update category checkboxes in main UI
+	updateCategoryCheckboxesWithCustom();
+	
+	// Show success message
+	showAlert('Configuration saved successfully!', 'Success', 'success');
+	
+	if (testConfigModal) {
+		testConfigModal.hide();
+	}
+}
+
+// Update category checkboxes to include custom categories
+function updateCategoryCheckboxesWithCustom() {
+	const container = document.getElementById('categoryCheckboxes');
+	if (!container) return;
+	
+	// Get all categories (default + custom)
+	const defaultCats = Object.keys(defaultPayloads);
+	const allCategories = [...new Set([...PAYLOAD_CATEGORIES, ...defaultCats, ...Object.keys(customPayloads)])];
+	
+	container.innerHTML = '';
+	const defaultChecked = ['SQL Injection', 'XSS'];
+	
+	allCategories.forEach((cat, idx) => {
+		const id = 'cat_' + idx;
+		const hasDefault = defaultPayloads[cat] !== undefined || PAYLOAD_CATEGORIES.includes(cat);
+		const isCustom = customPayloads[cat] !== undefined && !hasDefault;
+		const isModified = customPayloads[cat] !== undefined && hasDefault;
+		
+		let label = cat;
+		if (isCustom) {
+			label += ' <span class="text-cyber-success text-[10px]">(custom)</span>';
+		} else if (isModified) {
+			label += ' <span class="text-cyber-warning text-[10px]">(mod)</span>';
+		}
+		
+		const div = document.createElement('div');
+		div.className = 'form-check';
+		div.innerHTML = `<input class="form-check-input" type="checkbox" value="${cat}" id="${id}"${defaultChecked.includes(cat) ? ' checked' : ''}>
+      <label class="form-check-label" for="${id}">${label}</label>`;
+		container.appendChild(div);
+	});
+}
+
+// Export custom payloads
+function exportCustomPayloads() {
+	// Export ALL payloads (defaults merged with customs)
+	const allPayloads = {};
+	
+	// Start with all default payloads
+	for (const [cat, data] of Object.entries(defaultPayloads)) {
+		allPayloads[cat] = {
+			type: data.type || 'ParamCheck',
+			payloads: [...(data.payloads || [])],
+			falsePayloads: [...(data.falsePayloads || [])]
+		};
+	}
+	
+	// Override with custom payloads (including deleted ones)
+	for (const [cat, data] of Object.entries(customPayloads)) {
+		if (data._deleted) {
+			// Category was deleted - mark it
+			allPayloads[cat] = { ...data };
+		} else {
+			allPayloads[cat] = {
+				type: data.type || 'ParamCheck',
+				payloads: [...(data.payloads || [])],
+				falsePayloads: [...(data.falsePayloads || [])]
+			};
+		}
+	}
+	
+	const exportData = {
+		version: '2.0',
+		exportedAt: new Date().toISOString(),
+		payloads: allPayloads
+	};
+	
+	// Convert to YAML
+	const yamlStr = jsyaml.dump(exportData, {
+		indent: 2,
+		lineWidth: -1,
+		quotingType: '"',
+		forceQuotes: false,
+		skipInvalid: false
+	});
+	
+	const blob = new Blob([yamlStr], { type: 'text/yaml' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = 'waf-checker-payloads.yaml';
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
+// Import custom payloads
+function importCustomPayloads() {
+	document.getElementById('importPayloadsInput').click();
+}
+
+// Handle file import
+function handlePayloadsImport(event) {
+	const file = event.target.files[0];
+	if (!file) return;
+	
+	const reader = new FileReader();
+	reader.onload = async function(e) {
+		try {
+			const fileContent = e.target.result;
+			const fileName = file.name.toLowerCase();
+			let imported;
+			
+			// Detect format and parse accordingly
+			if (fileName.endsWith('.yaml') || fileName.endsWith('.yml')) {
+				// Parse YAML
+				if (typeof jsyaml === 'undefined') {
+					throw new Error('YAML parser not loaded. Please refresh the page.');
+				}
+				imported = jsyaml.load(fileContent);
+			} else if (fileName.endsWith('.json')) {
+				// Parse JSON (backward compatibility)
+				imported = JSON.parse(fileContent);
+			} else {
+				// Try to auto-detect: if it starts with { or [, it's JSON, otherwise try YAML
+				const trimmed = fileContent.trim();
+				if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+					imported = JSON.parse(fileContent);
+				} else {
+					if (typeof jsyaml === 'undefined') {
+						throw new Error('YAML parser not loaded. Please refresh the page.');
+					}
+					imported = jsyaml.load(fileContent);
+				}
+			}
+			
+			// Validate structure
+			if (typeof imported !== 'object' || imported === null) {
+				throw new Error('Invalid format: expected an object');
+			}
+			
+			// Handle new format (v2.0) with wrapper
+			let payloadsData = imported;
+			if (imported.version && imported.payloads) {
+				payloadsData = imported.payloads;
+			}
+			
+			// Ask user what to do
+			const replaceAll = await showConfirm('Replace all payloads?\n\nOK = Replace all (recommended)\nCancel = Merge with existing', 'Import Mode');
+			
+			if (replaceAll) {
+				// Replace mode - clear all custom payloads and import
+				customPayloads = {};
+			}
+			
+			// Import payloads
+			Object.keys(payloadsData).forEach(cat => {
+				const data = payloadsData[cat];
+				if (data.payloads !== undefined || data.falsePayloads !== undefined) {
+					// Check if this differs from default
+					const defaultData = defaultPayloads[cat];
+					const isDifferentFromDefault = !defaultData || 
+						JSON.stringify(data.payloads) !== JSON.stringify(defaultData.payloads) ||
+						JSON.stringify(data.falsePayloads) !== JSON.stringify(defaultData.falsePayloads) ||
+						data._deleted;
+					
+					if (isDifferentFromDefault) {
+						customPayloads[cat] = {
+							type: data.type || 'ParamCheck',
+							payloads: data.payloads || [],
+							falsePayloads: data.falsePayloads || [],
+							...(data._deleted ? { _deleted: true } : {})
+						};
+					}
+				}
+			});
+			
+			localStorage.setItem('wafchecker_customPayloads', JSON.stringify(customPayloads));
+			renderConfigCategoryList();
+			updateCustomCount();
+			showEditorEmpty();
+			showAlert('Payloads imported successfully!', 'Success', 'success');
+		} catch (err) {
+			showAlert('Failed to import: Invalid format\n' + err.message, 'Error', 'error');
+		}
+	};
+	reader.readAsText(file);
+	
+	// Reset input
+	event.target.value = '';
+}
+
+// Override renderCategoryCheckboxes to include custom categories
+const originalRenderCategoryCheckboxes = renderCategoryCheckboxes;
+renderCategoryCheckboxes = function() {
+	initCustomPayloads();
+	updateCategoryCheckboxesWithCustom();
+};

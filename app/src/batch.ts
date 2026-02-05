@@ -1,5 +1,5 @@
 /**
- * Batch testing module for WAF Checker - handles bulk URL testing with progress tracking
+ * Batch testing module for WAF-CHECKER.COM - handles bulk URL testing with progress tracking
  * Supports concurrent testing, progress reporting, and result aggregation
  */
 

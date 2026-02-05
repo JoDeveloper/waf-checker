@@ -1,4 +1,4 @@
-# WAF Checker (Cloudflare Worker Style)
+# WAF-CHECKER.COM (Cloudflare Worker Style)
 
 This project helps you check how well your Web Application Firewall (WAF) protects your product against common web attacks. It is a web application implemented in a Cloudflare Worker style using TypeScript and provides a convenient web interface for WAF testing with a wide range of attack payloads.
 

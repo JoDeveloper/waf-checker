@@ -94,8 +94,15 @@ export default {
 		if (urlObj.pathname === '/') {
 			return new Response(INDEX_HTML, { headers: { 'content-type': 'text/html; charset=UTF-8' } });
 		}
+		if (urlObj.pathname === '/api/payloads') {
+			return handleGetPayloads(urlObj);
+		}
 		if (urlObj.pathname === '/api/waf-detect') {
 			return await handleWAFDetection(request);
+		}
+		if (urlObj.pathname === '/api/check-stream') {
+			// New streaming endpoint with SSE
+			return handleApiCheckStream(request);
 		}
 		if (urlObj.pathname === '/api/check') {
 			const url = urlObj.searchParams.get('url');
@@ -118,6 +125,7 @@ export default {
 			}
 			let payloadTemplate: string | undefined = undefined;
 			let customHeaders: string | undefined = undefined;
+			let customPayloads: Record<string, { type: string; payloads: string[]; falsePayloads: string[] }> | undefined = undefined;
 			if (request.method === 'POST') {
 				try {
 					const body: any = await request.json();
@@ -129,6 +137,9 @@ export default {
 					}
 					if (body && typeof body.detectedWAF === 'string') {
 						// detectedWAF can also come from request body
+					}
+					if (body && body.customPayloads && typeof body.customPayloads === 'object') {
+						customPayloads = body.customPayloads;
 					}
 				} catch (e) {
 					console.error('Error parsing request body:', e);
@@ -175,6 +186,7 @@ export default {
 							enableContentTypeConfusion: true,
 						}
 					: undefined,
+				customPayloads,
 			);
 			return new Response(JSON.stringify(results), { headers: { 'content-type': 'application/json; charset=UTF-8' } });
 		}
@@ -194,6 +206,314 @@ export default {
 	},
 };
 
+// New streaming endpoint with parallelized requests
+async function handleApiCheckStream(request: Request): Promise<Response> {
+	const urlObj = new URL(request.url);
+	let url = urlObj.searchParams.get('url');
+	if (!url) return new Response('Missing url param', { status: 400 });
+	if (url.includes('secmy')) {
+		return new Response('data: {"type":"complete","results":[]}\n\n', {
+			headers: {
+				'content-type': 'text/event-stream',
+				'cache-control': 'no-cache',
+				'connection': 'keep-alive',
+			},
+		});
+	}
+
+	const methods = (urlObj.searchParams.get('methods') || 'GET')
+		.split(',')
+		.map((m) => m.trim())
+		.filter(Boolean);
+	const categoriesParam = urlObj.searchParams.get('categories');
+	let categories: string[] | undefined = undefined;
+	if (categoriesParam) {
+		categories = categoriesParam
+			.split(',')
+			.map((c) => c.trim())
+			.filter(Boolean);
+	}
+
+	let payloadTemplate: string | undefined = undefined;
+	let customHeaders: string | undefined = undefined;
+	let customPayloads: Record<string, { type: string; payloads: string[]; falsePayloads: string[] }> | undefined = undefined;
+	if (request.method === 'POST') {
+		try {
+			const body: any = await request.json();
+			if (body && typeof body.payloadTemplate === 'string') {
+				payloadTemplate = body.payloadTemplate;
+			}
+			if (body && typeof body.customHeaders === 'string') {
+				customHeaders = body.customHeaders;
+			}
+			if (body && body.customPayloads && typeof body.customPayloads === 'object') {
+				customPayloads = body.customPayloads;
+			}
+		} catch (e) {
+			console.error('Error parsing request body:', e);
+		}
+	}
+
+	const followRedirect = urlObj.searchParams.get('followRedirect') === '1';
+	const falsePositiveTest = urlObj.searchParams.get('falsePositiveTest') === '1';
+	const caseSensitiveTest = urlObj.searchParams.get('caseSensitiveTest') === '1';
+	const useEnhancedPayloads = urlObj.searchParams.get('enhancedPayloads') === '1';
+	const useAdvancedPayloads = urlObj.searchParams.get('useAdvancedPayloads') === '1';
+	const autoDetectWAF = urlObj.searchParams.get('autoDetectWAF') === '1';
+	const useEncodingVariations = urlObj.searchParams.get('useEncodingVariations') === '1';
+	const enableHTTPManipulation = urlObj.searchParams.get('httpManipulation') === '1';
+	const detectedWAF = urlObj.searchParams.get('detectedWAF') || undefined;
+
+	// Create a readable stream for SSE
+	const stream = new ReadableStream({
+		async start(controller) {
+			const encoder = new TextEncoder();
+			
+			const sendEvent = (type: string, data: any) => {
+				const message = `data: ${JSON.stringify({ type, ...data })}\n\n`;
+				controller.enqueue(encoder.encode(message));
+			};
+
+			try {
+				// Get payload source
+				let payloadSource: Record<string, PayloadCategory> = useEnhancedPayloads ? { ...ENHANCED_PAYLOADS } : { ...PAYLOADS };
+				if (useAdvancedPayloads) {
+					payloadSource = { ...payloadSource, ...ADVANCED_PAYLOADS };
+				}
+				if (useEncodingVariations) {
+					const encodedPayloads = generateEncodedPayloads(payloadSource);
+					payloadSource = { ...payloadSource, ...encodedPayloads };
+				}
+
+				// Merge custom payloads
+				if (customPayloads && Object.keys(customPayloads).length > 0) {
+					for (const [category, data] of Object.entries(customPayloads)) {
+						if (data._deleted) continue; // Skip deleted categories
+						if (payloadSource[category]) {
+							const existingPayloads = payloadSource[category].payloads || [];
+							const existingFalsePayloads = payloadSource[category].falsePayloads || [];
+							const customPayloadsList = data.payloads || [];
+							const customFalsePayloadsList = data.falsePayloads || [];
+							const mergedPayloads = [...new Set([...existingPayloads, ...customPayloadsList])];
+							const mergedFalsePayloads = [...new Set([...existingFalsePayloads, ...customFalsePayloadsList])];
+							payloadSource[category] = {
+								...payloadSource[category],
+								payloads: mergedPayloads,
+								falsePayloads: mergedFalsePayloads,
+							};
+						} else {
+							payloadSource[category] = {
+								type: data.type || 'ParamCheck',
+								payloads: data.payloads || [],
+								falsePayloads: data.falsePayloads || [],
+							};
+						}
+					}
+				}
+
+				const payloadEntries =
+					categories && categories.length
+						? Object.entries(payloadSource).filter(([cat]) => categories.includes(cat))
+						: Object.entries(payloadSource);
+
+				// WAF detection if needed
+				let wafDetectionResult: WAFDetectionResult | undefined;
+				if (autoDetectWAF) {
+					try {
+						wafDetectionResult = await WAFDetector.activeDetection(url);
+						sendEvent('waf-detected', { waf: wafDetectionResult });
+					} catch (e) {
+						console.error('WAF detection failed:', e);
+					}
+				}
+
+				// Prepare all test requests
+				const testRequests: Array<{
+					category: string;
+					payload: string;
+					method: string;
+					headersObj?: Record<string, string>;
+					checkType: string;
+				}> = [];
+
+				let baseUrl: string;
+				try {
+					const u = new URL(url);
+					baseUrl = `${u.protocol}//${u.host}`;
+				} catch {
+					baseUrl = url;
+				}
+
+				let originalUrl = url;
+				if (caseSensitiveTest) {
+					try {
+						const u = new URL(url);
+						const modifiedHostname = randomUppercase(u.hostname);
+						u.hostname = modifiedHostname;
+						url = u.toString();
+						baseUrl = `${u.protocol}//${u.host}`;
+					} catch (e) {
+						url = randomUppercase(url);
+						baseUrl = randomUppercase(baseUrl);
+					}
+				}
+
+				const detectedWAFType = detectedWAF || (wafDetectionResult?.detected ? wafDetectionResult.wafType : undefined);
+
+				// Build all test requests
+				for (const [category, info] of payloadEntries) {
+					const checkType = info.type || 'ParamCheck';
+					const payloads = falsePositiveTest ? info.falsePayloads || [] : info.payloads || [];
+					
+					if (checkType === 'ParamCheck') {
+						for (let payload of payloads) {
+							if (caseSensitiveTest) {
+								payload = randomUppercase(payload);
+							}
+
+							let payloadVariations = [payload];
+							if (detectedWAFType) {
+								const wafSpecificPayloads = generateWAFSpecificPayloads(detectedWAFType, payload);
+								payloadVariations = wafSpecificPayloads.length > 1 ? wafSpecificPayloads : [payload];
+							}
+							if (useEncodingVariations && !detectedWAFType) {
+								const encodedVariations = PayloadEncoder.generateBypassVariations(payload, category);
+								payloadVariations = encodedVariations;
+							}
+
+							for (const currentPayload of payloadVariations) {
+								for (const method of methods) {
+									let headersObj = customHeaders ? processCustomHeaders(customHeaders, currentPayload) : undefined;
+									let finalPayload = currentPayload;
+									if (enableHTTPManipulation) {
+										const pollutedPayloads = generateHTTPManipulationPayloads(currentPayload, 'pollution');
+										if (pollutedPayloads.length > 1) {
+											finalPayload = pollutedPayloads[1];
+										}
+									}
+									testRequests.push({ category, payload: finalPayload, method, headersObj, checkType });
+								}
+							}
+						}
+					} else if (checkType === 'FileCheck') {
+						for (let payload of payloads) {
+							if (caseSensitiveTest) {
+								payload = randomUppercase(payload);
+							}
+							const fileUrl = baseUrl.replace(/\/$/, '') + '/' + payload.replace(/^\//, '');
+							const headersObj = customHeaders ? processCustomHeaders(customHeaders, payload) : undefined;
+							testRequests.push({ category, payload: fileUrl, method: 'GET', headersObj, checkType });
+						}
+					} else if (checkType === 'Header') {
+						for (let payload of payloads) {
+							if (caseSensitiveTest) {
+								payload = randomUppercase(payload);
+							}
+							const headersObj: Record<string, string> = {};
+							for (const line of payload.split(/\r?\n/)) {
+								const idx = line.indexOf(':');
+								if (idx > 0) {
+									const name = line.slice(0, idx).trim();
+									const value = line.slice(idx + 1).trim();
+									headersObj[name] = value;
+								}
+							}
+							if (customHeaders) {
+								const customHeadersObj = processCustomHeaders(customHeaders, payload);
+								Object.assign(headersObj, customHeadersObj);
+							}
+							for (const method of methods) {
+								testRequests.push({ category, payload, method, headersObj, checkType });
+							}
+						}
+					}
+				}
+
+				// Send total count
+				sendEvent('total', { count: testRequests.length });
+
+				// Process requests in parallel batches
+				const PARALLEL_BATCH_SIZE = 20; // Number of concurrent requests
+				let completedCount = 0;
+
+				for (let i = 0; i < testRequests.length; i += PARALLEL_BATCH_SIZE) {
+					const batch = testRequests.slice(i, i + PARALLEL_BATCH_SIZE);
+					
+					// Execute batch in parallel
+					const batchPromises = batch.map(async (req) => {
+						try {
+							let finalUrl = url;
+							let finalMethod = req.method;
+							let finalPayload = req.payload;
+
+							if (req.checkType === 'FileCheck') {
+								finalUrl = req.payload;
+								finalPayload = undefined;
+							}
+
+							const res = await sendRequest(
+								finalUrl,
+								finalMethod,
+								finalPayload,
+								req.headersObj,
+								payloadTemplate,
+								followRedirect,
+								useEnhancedPayloads,
+								detectedWAFType,
+							);
+
+							const result = {
+								category: req.category,
+								payload: req.payload,
+								method: req.method,
+								status: res ? res.status : 'ERR',
+								is_redirect: res ? res.is_redirect : false,
+								responseTime: res ? res.responseTime : 0,
+								wafDetected: wafDetectionResult?.detected || false,
+								wafType: detectedWAFType || 'Unknown',
+							};
+
+							completedCount++;
+							sendEvent('result', { result, completed: completedCount, total: testRequests.length });
+
+							return result;
+						} catch (e) {
+							completedCount++;
+							const errorResult = {
+								category: req.category,
+								payload: req.payload,
+								method: req.method,
+								status: 'ERR',
+								is_redirect: false,
+								responseTime: 0,
+							};
+							sendEvent('result', { result: errorResult, completed: completedCount, total: testRequests.length });
+							return errorResult;
+						}
+					});
+
+					await Promise.allSettled(batchPromises);
+				}
+
+				// Send completion
+				sendEvent('complete', {});
+				controller.close();
+			} catch (error) {
+				sendEvent('error', { message: error instanceof Error ? error.message : 'Unknown error' });
+				controller.close();
+			}
+		},
+	});
+
+	return new Response(stream, {
+		headers: {
+			'content-type': 'text/event-stream',
+			'cache-control': 'no-cache',
+			'connection': 'keep-alive',
+		},
+	});
+}
+
 async function handleApiCheckFiltered(
 	url: string,
 	page: number,
@@ -210,6 +530,7 @@ async function handleApiCheckFiltered(
 	useEncodingVariations: boolean = false,
 	detectedWAF?: string,
 	httpManipulation?: HTTPManipulationOptions,
+	customPayloads?: Record<string, { type: string; payloads: string[]; falsePayloads: string[] }>,
 ): Promise<any[]> {
 	const METHODS = methods && methods.length ? methods : ['GET'];
 	const results: any[] = [];
@@ -258,7 +579,7 @@ async function handleApiCheckFiltered(
 	}
 
 	// Choose payload source based on options
-	let payloadSource = useEnhancedPayloads ? ENHANCED_PAYLOADS : PAYLOADS;
+	let payloadSource: Record<string, PayloadCategory> = useEnhancedPayloads ? { ...ENHANCED_PAYLOADS } : { ...PAYLOADS };
 
 	// Add advanced payloads if requested
 	if (useAdvancedPayloads) {
@@ -269,6 +590,37 @@ async function handleApiCheckFiltered(
 	if (useEncodingVariations) {
 		const encodedPayloads = generateEncodedPayloads(payloadSource);
 		payloadSource = { ...payloadSource, ...encodedPayloads };
+	}
+
+	// Merge custom payloads if provided
+	if (customPayloads && Object.keys(customPayloads).length > 0) {
+		for (const [category, data] of Object.entries(customPayloads)) {
+			if (payloadSource[category]) {
+				// Merge with existing category: add custom payloads to existing ones
+				const existingPayloads = payloadSource[category].payloads || [];
+				const existingFalsePayloads = payloadSource[category].falsePayloads || [];
+				const customPayloadsList = data.payloads || [];
+				const customFalsePayloadsList = data.falsePayloads || [];
+				
+				// Create unique sets to avoid duplicates
+				const mergedPayloads = [...new Set([...existingPayloads, ...customPayloadsList])];
+				const mergedFalsePayloads = [...new Set([...existingFalsePayloads, ...customFalsePayloadsList])];
+				
+				payloadSource[category] = {
+					...payloadSource[category],
+					payloads: mergedPayloads,
+					falsePayloads: mergedFalsePayloads,
+				};
+			} else {
+				// New custom category
+				payloadSource[category] = {
+					type: data.type || 'ParamCheck',
+					payloads: data.payloads || [],
+					falsePayloads: data.falsePayloads || [],
+				};
+			}
+		}
+		console.log(`Merged custom payloads. Total categories: ${Object.keys(payloadSource).length}`);
 	}
 
 	const payloadEntries =
@@ -492,6 +844,59 @@ async function handleHTTPManipulation(request: Request): Promise<Response> {
 			},
 		);
 	}
+}
+
+// Endpoint to get default payloads for configuration
+function handleGetPayloads(urlObj: URL): Response {
+	const category = urlObj.searchParams.get('category');
+	const includeAdvanced = urlObj.searchParams.get('includeAdvanced') === '1';
+	const includeEnhanced = urlObj.searchParams.get('includeEnhanced') === '1';
+
+	// Combine all payload sources
+	let allPayloads: Record<string, PayloadCategory> = { ...PAYLOADS };
+	
+	if (includeEnhanced) {
+		allPayloads = { ...allPayloads, ...ENHANCED_PAYLOADS };
+	}
+	
+	if (includeAdvanced) {
+		allPayloads = { ...allPayloads, ...ADVANCED_PAYLOADS };
+	}
+
+	if (category) {
+		// Return specific category
+		const categoryData = allPayloads[category];
+		if (!categoryData) {
+			return new Response(JSON.stringify({ error: 'Category not found' }), {
+				status: 404,
+				headers: { 'content-type': 'application/json; charset=UTF-8' },
+			});
+		}
+		return new Response(
+			JSON.stringify({
+				category,
+				type: categoryData.type,
+				payloads: categoryData.payloads,
+				falsePayloads: categoryData.falsePayloads,
+			}),
+			{ headers: { 'content-type': 'application/json; charset=UTF-8' } }
+		);
+	}
+
+	// Return all categories with their payloads
+	const result: Record<string, { type: string; payloads: string[]; falsePayloads: string[] }> = {};
+	
+	for (const [cat, data] of Object.entries(allPayloads)) {
+		result[cat] = {
+			type: data.type,
+			payloads: data.payloads,
+			falsePayloads: data.falsePayloads,
+		};
+	}
+
+	return new Response(JSON.stringify(result), {
+		headers: { 'content-type': 'application/json; charset=UTF-8' },
+	});
 }
 
 // New endpoint for WAF detection

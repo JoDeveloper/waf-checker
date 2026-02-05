@@ -1,375 +1,809 @@
 <!doctype html>
-<html>
+<html lang="en">
 	<head>
-		<title>WAF Checker</title>
+		<title>WAF-CHECKER.COM</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<meta
-			name="description"
-			content="WAF Checker — test your Web Application Firewall against common attack payloads (SQLi, XSS, Path Traversal, Command Injection, SSRF, NoSQLi, LFI) using various HTTP methods."
-		/>
-		<meta
-			name="keywords"
-			content="WAF, Web Application Firewall, security, SQLi, XSS, SSRF, LFI, NoSQLi, Path Traversal, Command Injection, pentest, HTTP methods, GET, POST, PUT, DELETE, security testing, vulnerability scanner"
-		/>
+		<meta name="description" content="WAF-CHECKER.COM — test your Web Application Firewall against common attack payloads." />
+		<meta name="keywords" content="WAF, Web Application Firewall, security, SQLi, XSS, pentest, vulnerability scanner" />
 		<meta name="robots" content="index, follow" />
-		<meta name="author" content="WAF Checker" />
+		<meta name="author" content="WAF-CHECKER.COM" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						colors: {
+							cyber: {
+								bg: '#0a0e14',
+								'bg-secondary': '#0d1117',
+								card: '#161b22',
+								elevated: '#1c2128',
+								accent: '#00d9ff',
+								success: '#00ff9d',
+								danger: '#ff3860',
+								warning: '#ffb347',
+							}
+						},
+						fontFamily: {
+							sans: ['Outfit', 'sans-serif'],
+							mono: ['JetBrains Mono', 'monospace'],
+						}
+					}
+				}
+			}
+		</script>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="style.css" rel="stylesheet" />
 		<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 	</head>
-	<body class="bg-light" style="background-color: var(--bs-body-bg) !important; color: var(--bs-body-color) !important">
-		<!-- GitHub repo link (left top corner) -->
-		<a class="github-corner-link" href="https://github.com/SecH0us3/waf-checker" target="_blank" rel="noopener" title="View on GitHub">
-			<svg viewBox="0 0 16 16" aria-hidden="true">
-				<path
-					d="M8 .198a8 8 0 0 0-2.5 15.6c.4.074.547-.174.547-.386 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.074-2.695-1.074-.364-.924-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.803.057 1.226.825 1.226.825.715 1.223 1.873.87 2.33.666.072-.518.28-.87.508-1.07-1.777-.2-3.644-.887-3.644-3.951 0-.873.312-1.588.824-2.148-.083-.202-.357-1.018.078-2.122 0 0 .672-.216 2.2.82a7.65 7.65 0 0 1 2-.27c.68.003 1.36.092 2 .27 1.527-1.036 2.198-.82 2.198-.82.437 1.104.163 1.92.08 2.122.513.56.823 1.275.823 2.148 0 3.073-1.87 3.748-3.65 3.944.288.246.543.734.543 1.48 0 1.07-.01 1.93-.01 2.194 0 .214.144.463.55.384A8 8 0 0 0 8 .196Z"
-				/>
-			</svg>
-			<span class="d-none d-md-inline">GitHub</span>
-		</a>
-		<!-- Set initial icon -->
-		<button class="theme-toggle" id="themeToggle" title="Toggle theme">☾</button>
-		<div class="container py-5">
-			<div class="row justify-content-center">
-				<div class="col-md-8 col-lg-6">
-					<div class="card shadow mb-4">
-						<div class="card-body">
-							<h1 class="mb-3 text-center">Test Your WAF</h1>
-							<p class="text-center mb-4" id="subtitle">
-								Enter a target URL to check your Web Application Firewall against common attack payloads
-							</p>
-							<!-- <form onsubmit="event.preventDefault(); fetchResults();"> -->
-							<div class="input-group mb-3">
-								<input
-									type="url"
-									id="url"
-									name="url"
-									class="form-control"
-									placeholder="Enter URL to test"
-									required
-									style="color: var(--bs-body-color); background-color: var(--bs-body-bg)"
-								/>
-								<button type="button" id="checkBtn" class="btn btn-primary" onclick="fetchResults()">Check</button>
-								<button type="button" id="detectWafBtn" class="btn btn-outline-info" onclick="detectWAF()">
-									Detect WAF
-								</button>
-								<button
-									type="button"
-									id="httpManipulationBtn"
-									class="btn btn-outline-warning"
-									onclick="testHTTPManipulation()"
-								>
-									HTTP Tests
-								</button>
-								<button type="button" id="batchTestBtn" class="btn btn-outline-success" onclick="showBatchModal()">
-									Batch Test
-								</button>
-							</div>
+	<body class="bg-cyber-bg text-gray-100 font-sans h-screen flex flex-col overflow-hidden" data-theme="dark">
+		<!-- Header Bar -->
+		<header class="h-14 bg-gradient-to-b from-cyber-card to-cyber-bg-secondary border-b border-cyber-accent/20 flex items-center justify-between px-4 shrink-0 z-50">
+			<div class="w-48">
+				<a href="https://github.com/papamica/waf-checker" target="_blank" rel="noopener" 
+				   class="inline-flex items-center gap-2 px-3 py-1.5 bg-cyber-elevated border border-cyber-accent/20 rounded-full text-gray-400 hover:text-cyber-accent hover:border-cyber-accent transition-all text-sm no-underline">
+					<svg class="w-4 h-4 fill-current" viewBox="0 0 16 16">
+						<path d="M8 .198a8 8 0 0 0-2.5 15.6c.4.074.547-.174.547-.386 0-.19-.007-.693-.01-1.36-2.226.484-2.695-1.074-2.695-1.074-.364-.924-.89-1.17-.89-1.17-.727-.497.055-.487.055-.487.803.057 1.226.825 1.226.825.715 1.223 1.873.87 2.33.666.072-.518.28-.87.508-1.07-1.777-.2-3.644-.887-3.644-3.951 0-.873.312-1.588.824-2.148-.083-.202-.357-1.018.078-2.122 0 0 .672-.216 2.2.82a7.65 7.65 0 0 1 2-.27c.68.003 1.36.092 2 .27 1.527-1.036 2.198-.82 2.198-.82.437 1.104.163 1.92.08 2.122.513.56.823 1.275.823 2.148 0 3.073-1.87 3.748-3.65 3.944.288.246.543.734.543 1.48 0 1.07-.01 1.93-.01 2.194 0 .214.144.463.55.384A8 8 0 0 0 8 .196Z"/>
+					</svg>
+					<span class="hidden md:inline">GitHub</span>
+				</a>
+			</div>
+			<div class="flex-1 text-center">
+				<h1 class="text-xl font-bold bg-gradient-to-r from-cyber-accent via-cyber-success to-cyber-accent bg-[length:200%_auto] bg-clip-text text-transparent animate-pulse">
+					WAF-CHECKER.COM
+				</h1>
+			</div>
+			<div class="w-48 flex justify-end">
+				<button type="button" onclick="showTestConfigModal()"
+						class="inline-flex items-center gap-2 px-3 py-1.5 bg-cyber-elevated border border-cyber-accent/20 rounded-full text-gray-400 hover:text-cyber-accent hover:border-cyber-accent transition-all text-sm">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+					</svg>
+					<span class="hidden md:inline">Configure Payloads</span>
+				</button>
+			</div>
+		</header>
 
-							<!-- WAF Detection Results Panel -->
-							<div id="wafDetectionPanel" class="alert alert-info mb-3" style="display: none">
-								<h6 class="fw-bold mb-2">🛡️ WAF Detection Results</h6>
-								<div id="wafDetectionResults"></div>
-								<div class="mt-2">
-									<button type="button" class="btn btn-sm btn-outline-primary" onclick="useAdvancedPayloads()">
-										Use Advanced Payloads
-									</button>
-									<button type="button" class="btn btn-sm btn-outline-secondary" onclick="hideWAFPanel()">Hide</button>
-								</div>
-							</div>
-							<div class="mb-3" id="methodCheckboxes">
-								<div class="d-flex gap-3 align-items-center justify-content-between flex-wrap">
-									<div class="d-flex gap-3 http-methods">
-										<div class="form-check">
-											<input class="form-check-input" type="checkbox" value="GET" id="methodGET" checked />
-											<label class="form-check-label" for="methodGET">GET</label>
-										</div>
-										<div class="form-check">
-											<input class="form-check-input" type="checkbox" value="POST" id="methodPOST" />
-											<label class="form-check-label" for="methodPOST">POST</label>
-										</div>
-										<div class="form-check">
-											<input class="form-check-input" type="checkbox" value="PUT" id="methodPUT" />
-											<label class="form-check-label" for="methodPUT">PUT</label>
-										</div>
-										<div class="form-check">
-											<input class="form-check-input" type="checkbox" value="DELETE" id="methodDELETE" />
-											<label class="form-check-label" for="methodDELETE">DELETE</label>
-										</div>
-									</div>
-									<div class="ms-auto" style="text-align: right">
-										<button type="button" id="moreSettingsToggle" onclick="toggleMoreSettings()">⚙️</button>
-									</div>
-								</div>
-							</div>
-							<!-- More expandable panel -->
-							<div class="mb-3">
-								<div class="mt-3" id="moreSettingsPanel" style="display: none">
-									<div class="card">
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="followRedirect" />
-												<label class="form-check-label" for="followRedirect">Follow 3xx redirects</label>
-											</div>
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="useAdvancedPayloadsCheckbox" />
-												<label class="form-check-label" for="useAdvancedPayloadsCheckbox"
-													>Use Advanced WAF Bypass Payloads</label
-												>
-											</div>
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="autoDetectWAF" />
-												<label class="form-check-label" for="autoDetectWAF">Auto-detect WAF before testing</label>
-											</div>
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="useEncodingVariations" />
-												<label class="form-check-label" for="useEncodingVariations"
-													>Generate encoding variations</label
-												>
-											</div>
-										</div>
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="enhancedPayloads" />
-												<label class="form-check-label" for="enhancedPayloads"
-													>Enhanced Payloads (modern bypass techniques)</label
-												>
-											</div>
-										</div>
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="autoDetectWAF" />
-												<label class="form-check-label" for="autoDetectWAF">Auto-detect WAF</label>
-											</div>
-										</div>
-										<div class="mb-3">
-											<div class="form-check">
-												<input class="form-check-input" type="checkbox" id="httpManipulation" />
-												<label class="form-check-label" for="httpManipulation"
-													>HTTP Protocol Manipulation (Parameter Pollution, Verb Tampering)</label
-												>
-											</div>
-										</div>
-										<div class="mb-3">
-											<div class="form-check">
-												<input
-													class="form-check-input false-positive-checkbox"
-													type="checkbox"
-													id="falsePositiveTest"
-												/>
-												<label class="form-check-label" for="falsePositiveTest"
-													>False Positive Test (test legitimate payloads)</label
-												>
-											</div>
-										</div>
-										<!-- New Case Sensitive Test checkbox -->
-										<div class="mb-3">
-											<div class="form-check">
-												<input
-													class="form-check-input case-sensitive-checkbox"
-													type="checkbox"
-													id="caseSensitiveTest"
-												/>
-												<label class="form-check-label" for="caseSensitiveTest">Case sensitive test</label>
-											</div>
-										</div>
-										<div class="mb-3">
-											<label for="customHeaders" class="form-label">Custom Headers:</label>
-											<textarea
-												id="customHeaders"
-												class="form-control"
-												rows="3"
-												placeholder="Content-Type: application/json&#10;X-Custom-Header: value"
-											></textarea>
-										</div>
-										<div class="mb-0" id="payloadTemplateSection" style="display: none">
-											<label for="payloadTemplate" class="form-label"
-												>Request Body Template (use <code>{{$$}}</code> for payload):</label
-											>
-											<textarea id="payloadTemplate" class="form-control" rows="4">
-{
-"test": "{{$$}}"
-}</textarea
-											>
-										</div>
-									</div>
-								</div>
-							</div>
-							<!-- Категории пейлоадов -->
-							<div class="mb-3" id="categoryCheckboxesContainer">
-								<hr />
-								<div id="categoryCheckboxes" class="row row-cols-2 g-1"></div>
-								<div class="mt-2 d-flex justify-content-end gap-2">
-									<button type="button" class="btn btn-sm btn-outline-secondary" id="selectAllCategoriesBtn">
-										Select All
-									</button>
-									<button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllCategoriesBtn">
-										Deselect All
-									</button>
-								</div>
-							</div>
-							<!-- </form> -->
+		<!-- Main Content -->
+		<main class="flex flex-1 overflow-hidden">
+			<!-- Left Panel - Configuration -->
+			<aside class="w-96 min-w-96 bg-cyber-bg-secondary border-r border-cyber-accent/20 overflow-y-auto p-4 flex flex-col gap-4">
+				
+				<!-- Target Configuration -->
+				<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl overflow-hidden hover:border-cyber-accent/40 transition-colors">
+					<!-- Header with tabs -->
+					<div class="flex items-center border-b border-cyber-accent/20 bg-cyber-elevated/30">
+						<button type="button" id="tabTarget" onclick="switchConfigTab('target')" 
+								class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-cyber-accent text-cyber-accent">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+							Target
+						</button>
+						<button type="button" id="tabAdvanced" onclick="switchConfigTab('advanced')" 
+								class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-200">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+							</svg>
+							Advanced
+						</button>
+					</div>
+					
+					<!-- Target Panel -->
+					<div id="panelTarget" class="p-3">
+						<div class="mb-4">
+							<label for="url" class="block text-xs font-medium text-gray-400 mb-2">Target URL</label>
+							<input type="url" id="url" name="url" 
+								   class="w-full bg-cyber-elevated border border-cyber-accent/30 rounded-lg px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:border-cyber-accent focus:ring-2 focus:ring-cyber-accent/30 outline-none transition-all"
+								   placeholder="https://target-url.com" required />
+						</div>
+						<button type="button" id="checkBtn" onclick="fetchResults()"
+								class="w-full bg-gradient-to-r from-cyber-accent to-cyan-500 text-cyber-bg font-bold py-3 rounded-lg mb-4 hover:shadow-lg hover:shadow-cyber-accent/40 transition-all uppercase text-sm tracking-wider">
+							Start Check
+						</button>
+						<div class="grid grid-cols-2 gap-3">
+							<button type="button" id="detectWafBtn" onclick="detectWAF()"
+									class="border-2 border-cyber-accent text-cyber-accent py-2.5 rounded-lg hover:bg-cyber-accent hover:text-cyber-bg transition-all uppercase text-xs font-bold tracking-wide">
+								Detect WAF
+							</button>
+							<button type="button" id="httpManipulationBtn" onclick="testHTTPManipulation()"
+									class="border-2 border-cyber-warning text-cyber-warning py-2.5 rounded-lg hover:bg-cyber-warning hover:text-cyber-bg transition-all uppercase text-xs font-bold tracking-wide">
+								HTTP Tests
+							</button>
+						</div>
+						<button type="button" id="batchTestBtn" onclick="showBatchModal()"
+								class="w-full border-2 border-cyber-success text-cyber-success py-2.5 rounded-lg hover:bg-cyber-success hover:text-cyber-bg transition-all uppercase text-xs font-bold tracking-wide mt-3">
+							Batch Test
+						</button>
+					</div>
+					
+					<!-- Advanced Panel -->
+					<div id="panelAdvanced" class="p-3" style="display: none;">
+						<div class="space-y-1.5 mb-3">
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="followRedirect" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Follow 3xx redirects</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="useAdvancedPayloadsCheckbox" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Advanced WAF Bypass Payloads</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="autoDetectWAF" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Auto-detect WAF before testing</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="useEncodingVariations" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Generate encoding variations</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="enhancedPayloads" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Enhanced Payloads (modern bypass)</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="httpManipulation" class="w-4 h-4 accent-cyber-accent shrink-0" />
+								<span class="text-xs text-gray-300 group-hover:text-white">HTTP Protocol Manipulation</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded cursor-pointer hover:bg-blue-500/20 transition-all group">
+								<input type="checkbox" id="falsePositiveTest" class="w-4 h-4 accent-blue-500 shrink-0 false-positive-checkbox" />
+								<span class="text-xs text-blue-400 group-hover:text-blue-300">False Positive Test</span>
+							</label>
+							<label class="flex items-center gap-2 px-2 py-1.5 bg-cyber-elevated/50 rounded cursor-pointer hover:bg-cyber-elevated transition-all group">
+								<input type="checkbox" id="caseSensitiveTest" class="w-4 h-4 accent-cyber-accent shrink-0 case-sensitive-checkbox" />
+								<span class="text-xs text-gray-300 group-hover:text-white">Case sensitive test</span>
+							</label>
+						</div>
+						
+						<!-- Custom Headers -->
+						<div class="mb-3">
+							<label for="customHeaders" class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Custom Headers</label>
+							<textarea id="customHeaders" rows="2"
+									  class="w-full bg-cyber-elevated border border-cyber-accent/30 rounded px-2 py-1.5 text-xs text-gray-100 font-mono placeholder-gray-500 focus:border-cyber-accent outline-none resize-none"
+									  placeholder="Content-Type: application/json&#10;X-Custom-Header: value"></textarea>
+						</div>
+						
+						<!-- Payload Template -->
+						<div id="payloadTemplateSection">
+							<label for="payloadTemplate" class="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">
+								Body Template (<code class="text-cyber-accent">{PAYLOAD}</code> = payload)
+							</label>
+							<textarea id="payloadTemplate" rows="2"
+									  class="w-full bg-cyber-elevated border border-cyber-accent/30 rounded px-2 py-1.5 text-xs text-gray-100 font-mono placeholder-gray-500 focus:border-cyber-accent outline-none resize-none">{"test": "{PAYLOAD}"}</textarea>
 						</div>
 					</div>
 				</div>
-			</div>
-			<div class="row justify-content-center">
-				<div class="col-12">
-					<div class="text-muted small mb-2 description-waf-check text-center"></div>
-					<div id="results" class="mt-3"></div>
 
-					<!-- Export Controls -->
-					<div id="exportControls" class="card mt-4" style="display: none">
-						<div class="card-header">
-							<h5 class="mb-0">📊 Export Results</h5>
-						</div>
-						<div class="card-body">
-							<div class="d-flex flex-wrap gap-2">
-								<button type="button" class="btn btn-outline-primary btn-sm" onclick="exportResults('json')">
-									📄 Export JSON
-								</button>
-								<button type="button" class="btn btn-outline-success btn-sm" onclick="exportResults('csv')">
-									📊 Export CSV
-								</button>
-								<button type="button" class="btn btn-outline-danger btn-sm" onclick="exportResults('pdf')">
-									📋 Export HTML Report
-								</button>
-								<button type="button" class="btn btn-outline-info btn-sm" onclick="showAnalytics()">
-									📈 Show Analytics
-								</button>
+				<!-- WAF Detection Results Panel -->
+				<div id="wafDetectionPanel" class="bg-gradient-to-br from-cyber-accent/10 to-cyber-success/5 border-2 border-cyber-accent rounded-xl p-3" style="display: none;">
+					<h6 class="font-bold text-cyber-accent mb-3 text-sm uppercase tracking-wider">WAF Detection Results</h6>
+					<div id="wafDetectionResults"></div>
+					<div class="mt-4 flex gap-3">
+						<button type="button" class="text-xs border-2 border-cyber-accent text-cyber-accent px-4 py-2 rounded-lg hover:bg-cyber-accent hover:text-cyber-bg transition-all font-semibold" onclick="useAdvancedPayloads()">
+							Use Advanced Payloads
+						</button>
+						<button type="button" class="text-xs border-2 border-gray-500 text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all font-semibold" onclick="hideWAFPanel()">
+							Hide
+						</button>
+					</div>
+				</div>
+
+				<!-- HTTP Methods -->
+				<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-3 hover:border-cyber-accent/40 transition-colors">
+					<h2 class="text-sm font-bold text-cyber-accent mb-4 uppercase tracking-wider flex items-center gap-2">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+						HTTP Methods
+					</h2>
+					<div class="methods-grid grid grid-cols-4 gap-2">
+						<label class="flex items-center justify-center gap-2 bg-cyber-elevated border-2 border-cyber-accent/30 rounded-lg px-3 py-2.5 cursor-pointer hover:border-cyber-accent hover:bg-cyber-accent/10 transition-all has-[:checked]:border-cyber-accent has-[:checked]:bg-cyber-accent/20">
+							<input type="checkbox" value="GET" id="methodGET" checked class="w-4 h-4 accent-cyber-accent" />
+							<span class="text-xs font-bold text-gray-200">GET</span>
+						</label>
+						<label class="flex items-center justify-center gap-2 bg-cyber-elevated border-2 border-cyber-accent/30 rounded-lg px-3 py-2.5 cursor-pointer hover:border-cyber-accent hover:bg-cyber-accent/10 transition-all has-[:checked]:border-cyber-accent has-[:checked]:bg-cyber-accent/20">
+							<input type="checkbox" value="POST" id="methodPOST" class="w-4 h-4 accent-cyber-accent" />
+							<span class="text-xs font-bold text-gray-200">POST</span>
+						</label>
+						<label class="flex items-center justify-center gap-2 bg-cyber-elevated border-2 border-cyber-accent/30 rounded-lg px-3 py-2.5 cursor-pointer hover:border-cyber-accent hover:bg-cyber-accent/10 transition-all has-[:checked]:border-cyber-accent has-[:checked]:bg-cyber-accent/20">
+							<input type="checkbox" value="PUT" id="methodPUT" class="w-4 h-4 accent-cyber-accent" />
+							<span class="text-xs font-bold text-gray-200">PUT</span>
+						</label>
+						<label class="flex items-center justify-center gap-2 bg-cyber-elevated border-2 border-cyber-accent/30 rounded-lg px-3 py-2.5 cursor-pointer hover:border-cyber-accent hover:bg-cyber-accent/10 transition-all has-[:checked]:border-cyber-accent has-[:checked]:bg-cyber-accent/20">
+							<input type="checkbox" value="DELETE" id="methodDELETE" class="w-4 h-4 accent-cyber-accent" />
+							<span class="text-xs font-bold text-gray-200">DEL</span>
+						</label>
+					</div>
+				</div>
+
+
+				<!-- Attack Categories -->
+				<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-3 hover:border-cyber-accent/40 transition-colors">
+					<div class="flex items-center justify-between mb-2">
+						<h2 class="text-sm font-bold text-cyber-accent uppercase tracking-wider flex items-center gap-2">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+							Attack Categories
+						</h2>
+						<button type="button" id="toggleAllCategoriesBtn" onclick="toggleAllCategories()" 
+								class="p-1.5 rounded-lg text-gray-400 hover:text-cyber-accent hover:bg-cyber-elevated transition-all" title="Toggle All">
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+							</svg>
+						</button>
+					</div>
+					<div id="categoryCheckboxes" class="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1"></div>
+				</div>
+			</aside>
+
+			<!-- Right Panel - Results -->
+			<section class="flex-1 flex flex-col overflow-hidden bg-cyber-bg">
+				
+				<!-- Progress Bar -->
+				<div id="progressBar" class="hidden bg-cyber-card border-b border-cyber-accent/20 shadow-lg shadow-cyber-accent/10">
+					<div class="px-6 py-4">
+						<div class="flex items-center justify-between mb-3">
+							<div class="flex items-center gap-3">
+								<div class="relative">
+									<div class="w-8 h-8 border-3 border-cyber-accent/30 rounded-full"></div>
+									<div class="absolute inset-0 w-8 h-8 border-3 border-cyber-accent border-t-transparent rounded-full animate-spin"></div>
+								</div>
+								<div>
+									<span id="progressText" class="text-sm font-bold text-white block">Running tests...</span>
+									<span id="progressCategory" class="text-xs text-cyber-accent">Initializing...</span>
+								</div>
 							</div>
-							<div class="form-check mt-2">
-								<input class="form-check-input" type="checkbox" id="includeAnalysis" checked />
-								<label class="form-check-label" for="includeAnalysis"> Include vulnerability analysis in exports </label>
+							<div class="text-right">
+								<span id="progressPercent" class="text-2xl font-bold text-cyber-accent">0%</span>
+								<span id="progressCount" class="text-xs text-gray-500 block">0 tests completed</span>
+							</div>
+						</div>
+						<div class="h-3 bg-cyber-elevated rounded-full overflow-hidden shadow-inner">
+							<div id="progressFill" class="h-full bg-gradient-to-r from-cyber-accent via-cyan-400 to-cyber-success rounded-full relative overflow-hidden" style="width: 0%">
+								<div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
 							</div>
 						</div>
 					</div>
+				</div>
+				
+				<div id="results" class="flex-1 overflow-y-auto p-6">
+					<div class="results-placeholder h-full">
+						<div class="max-w-2xl mx-auto">
+							<!-- Header -->
+							<div class="flex items-center gap-5 mb-8">
+								<div class="w-16 h-16 shrink-0 bg-cyber-accent/10 rounded-2xl flex items-center justify-center text-cyber-accent">
+									<svg class="w-9 h-9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+										<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+										<path d="M9 12l2 2 4-4"/>
+									</svg>
+								</div>
+								<div>
+									<h3 class="text-2xl font-bold text-white">WAF Security Tester</h3>
+									<p class="text-gray-400">Test your Web Application Firewall against common attack payloads</p>
+								</div>
+							</div>
 
-					<!-- Analytics Dashboard -->
-					<div id="analyticsDashboard" class="card mt-4" style="display: none">
-						<div class="card-header d-flex justify-content-between align-items-center">
-							<h5 class="mb-0">📈 Test Analytics</h5>
-							<button type="button" class="btn-close" onclick="hideAnalytics()"></button>
+							<!-- Quick Start Guide -->
+							<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-3 mb-4">
+								<h4 class="text-sm font-bold text-cyber-accent uppercase tracking-wider mb-4 flex items-center gap-2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+									Quick Start
+								</h4>
+								<ol class="space-y-3 text-sm text-gray-300">
+									<li class="flex gap-3">
+										<span class="flex-shrink-0 w-6 h-6 bg-cyber-accent/20 text-cyber-accent rounded-full flex items-center justify-center text-xs font-bold">1</span>
+										<span>Enter your target URL in the <strong class="text-white">Target URL</strong> field (e.g., https://example.com)</span>
+									</li>
+									<li class="flex gap-3">
+										<span class="flex-shrink-0 w-6 h-6 bg-cyber-accent/20 text-cyber-accent rounded-full flex items-center justify-center text-xs font-bold">2</span>
+										<span>Select <strong class="text-white">HTTP Methods</strong> to test (GET, POST, PUT, DELETE)</span>
+									</li>
+									<li class="flex gap-3">
+										<span class="flex-shrink-0 w-6 h-6 bg-cyber-accent/20 text-cyber-accent rounded-full flex items-center justify-center text-xs font-bold">3</span>
+										<span>Choose <strong class="text-white">Attack Categories</strong> (SQL Injection, XSS, etc.)</span>
+									</li>
+									<li class="flex gap-3">
+										<span class="flex-shrink-0 w-6 h-6 bg-cyber-success/20 text-cyber-success rounded-full flex items-center justify-center text-xs font-bold">4</span>
+										<span>Click <strong class="text-cyber-accent">Start Check</strong> to begin testing</span>
+									</li>
+								</ol>
+							</div>
+
+							<!-- Features Grid -->
+							<div class="grid grid-cols-2 gap-3 mb-4">
+								<div class="bg-cyber-elevated/50 border border-cyber-accent/10 rounded-lg p-3">
+									<div class="text-cyber-accent text-xs font-bold uppercase mb-1">Detect WAF</div>
+									<p class="text-[11px] text-gray-400">Auto-detect which WAF is protecting your target</p>
+								</div>
+								<div class="bg-cyber-elevated/50 border border-cyber-accent/10 rounded-lg p-3">
+									<div class="text-cyber-warning text-xs font-bold uppercase mb-1">HTTP Tests</div>
+									<p class="text-[11px] text-gray-400">Test WAF bypass via headers & methods</p>
+								</div>
+								<div class="bg-cyber-elevated/50 border border-cyber-accent/10 rounded-lg p-3">
+									<div class="text-cyber-success text-xs font-bold uppercase mb-1">Batch Test</div>
+									<p class="text-[11px] text-gray-400">Test multiple URLs at once (up to 100)</p>
+								</div>
+								<div class="bg-cyber-elevated/50 border border-cyber-accent/10 rounded-lg p-3">
+									<div class="text-blue-400 text-xs font-bold uppercase mb-1">False Positive</div>
+									<p class="text-[11px] text-gray-400">Check if legitimate traffic is being blocked</p>
+								</div>
+							</div>
+							
+							<!-- Custom Payloads hint -->
+							<div class="bg-gradient-to-r from-cyber-accent/10 to-cyber-success/10 border border-cyber-accent/30 rounded-xl p-4 mb-4 flex items-center gap-4">
+								<div class="w-10 h-10 shrink-0 bg-cyber-accent/20 rounded-lg flex items-center justify-center">
+									<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+									</svg>
+								</div>
+								<div class="flex-1">
+									<div class="text-sm font-semibold text-white mb-0.5">Customize your payloads</div>
+									<p class="text-[11px] text-gray-400">Add, edit or remove attack payloads. Click <button onclick="showTestConfigModal()" class="text-cyber-accent hover:underline font-semibold">Configure Payloads</button> in the header to customize.</p>
+								</div>
+							</div>
+
+							<!-- Understanding Results -->
+							<div class="bg-cyber-card border border-cyber-accent/20 rounded-xl p-3">
+								<h4 class="text-sm font-bold text-cyber-accent uppercase tracking-wider mb-3 flex items-center gap-2">
+									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+									Understanding Results
+								</h4>
+								<div class="grid grid-cols-2 gap-2 text-xs">
+									<div class="flex items-center gap-2">
+										<span class="w-3 h-3 rounded bg-cyber-success"></span>
+										<span class="text-gray-300"><strong class="text-white">403</strong> = WAF blocked (good)</span>
+									</div>
+									<div class="flex items-center gap-2">
+										<span class="w-3 h-3 rounded bg-cyber-danger"></span>
+										<span class="text-gray-300"><strong class="text-white">200</strong> = Payload passed (bad)</span>
+									</div>
+									<div class="flex items-center gap-2">
+										<span class="w-3 h-3 rounded bg-cyber-warning"></span>
+										<span class="text-gray-300"><strong class="text-white">4xx</strong> = Other client error</span>
+									</div>
+									<div class="flex items-center gap-2">
+										<span class="w-3 h-3 rounded bg-blue-500"></span>
+										<span class="text-gray-300"><strong class="text-white">3xx</strong> = Redirect</span>
+									</div>
+								</div>
+							</div>
 						</div>
-						<div class="card-body">
-							<div id="analyticsContent"></div>
+					</div>
+				</div>
+
+				<!-- Export Controls -->
+				<div id="exportControls" class="mx-4 mb-3 inline-flex items-center gap-1 bg-cyber-card/50 border border-cyber-accent/20 rounded-lg px-2 py-1.5" style="display: none;">
+					<span class="text-[10px] text-gray-500 font-semibold uppercase">Export:</span>
+					<button type="button" onclick="exportResults('json')" class="text-[10px] bg-cyber-elevated border border-cyber-accent/40 text-cyber-accent px-2 py-0.5 rounded hover:bg-cyber-accent hover:text-cyber-bg transition-all font-medium">JSON</button>
+					<button type="button" onclick="exportResults('csv')" class="text-[10px] bg-cyber-elevated border border-cyber-success/40 text-cyber-success px-2 py-0.5 rounded hover:bg-cyber-success hover:text-cyber-bg transition-all font-medium">CSV</button>
+					<button type="button" onclick="exportResults('pdf')" class="text-[10px] bg-cyber-elevated border border-cyber-danger/40 text-cyber-danger px-2 py-0.5 rounded hover:bg-cyber-danger hover:text-white transition-all font-medium">HTML</button>
+					<button type="button" onclick="showAnalytics()" class="text-[10px] bg-cyber-elevated border border-cyber-warning/40 text-cyber-warning px-2 py-0.5 rounded hover:bg-cyber-warning hover:text-cyber-bg transition-all font-medium">Analytics</button>
+				</div>
+
+			</section>
+		</main>
+
+		<!-- Analytics Modal -->
+		<div id="analyticsModal" class="fixed inset-0 z-[9998] flex items-center justify-center p-4" style="display: none;">
+			<div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="hideAnalytics()"></div>
+			<div class="relative bg-cyber-bg border border-cyber-accent/30 rounded-2xl shadow-2xl shadow-cyber-accent/20 w-full max-w-5xl max-h-[90vh] flex flex-col animate-modal-in">
+				<!-- Header -->
+				<div class="flex items-center justify-between px-6 py-4 border-b border-cyber-accent/20 bg-cyber-card rounded-t-2xl shrink-0">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 rounded-lg bg-cyber-warning/20 flex items-center justify-center">
+							<svg class="w-5 h-5 text-cyber-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-lg font-bold text-white">Security Analytics</h3>
+							<p class="text-xs text-gray-400">Detailed vulnerability assessment report</p>
+						</div>
+					</div>
+					<div class="flex items-center gap-2">
+						<button type="button" onclick="exportAnalyticsScreenshot(event)" class="flex items-center gap-2 px-3 py-2 bg-cyber-accent/20 text-cyber-accent text-xs font-medium rounded-lg hover:bg-cyber-accent hover:text-cyber-bg transition-all" title="Export as Image">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+							</svg>
+							Screenshot
+						</button>
+						<button type="button" onclick="hideAnalytics()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-cyber-elevated rounded-lg transition-all">
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+							</svg>
+						</button>
+					</div>
+				</div>
+				<!-- Content -->
+				<div class="flex-1 overflow-y-auto p-6" id="analyticsContent">
+					<!-- Analytics content will be injected here -->
+				</div>
+			</div>
+		</div>
+
+		<!-- Legacy Analytics Dashboard (hidden, kept for compatibility) -->
+		<div id="analyticsDashboard" style="display: none;"></div>
+
+		<!-- Payload Configuration Modal -->
+		<div class="modal fade" id="testConfigModal" tabindex="-1">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content bg-cyber-card border border-cyber-accent/20 rounded-xl">
+					<div class="modal-header bg-cyber-elevated border-b border-cyber-accent/20 rounded-t-xl px-5 py-4">
+						<h5 class="modal-title text-cyber-accent font-semibold flex items-center gap-2">
+							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+							</svg>
+							Payload Configuration
+						</h5>
+						<button type="button" class="btn-close invert" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body text-gray-100 p-0" style="height: 70vh; max-height: 70vh;">
+						<div class="flex h-full overflow-hidden">
+							<!-- Left sidebar - Categories list -->
+							<div class="w-64 min-w-64 bg-cyber-bg-secondary border-r border-cyber-accent/20 flex flex-col">
+								<div class="p-4 border-b border-cyber-accent/20">
+									<h6 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categories</h6>
+									<button type="button" onclick="addNewCategory()" 
+											class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-cyber-accent/20 border border-cyber-accent/50 rounded-lg text-cyber-accent hover:bg-cyber-accent hover:text-cyber-bg transition-all text-sm font-semibold">
+										<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+										</svg>
+										Add Category
+									</button>
+								</div>
+								<div id="configCategoryList" class="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-cyber-accent/30 scrollbar-track-transparent">
+									<!-- Categories will be rendered here -->
+								</div>
+								<div class="p-2 border-t border-cyber-accent/20 bg-cyber-elevated/50 space-y-1">
+								<div class="flex gap-1">
+									<button type="button" onclick="exportCustomPayloads()" class="flex-1 text-[10px] px-2 py-1 border border-gray-600 text-gray-400 rounded hover:bg-gray-600 transition-all" title="Export all payloads">Export</button>
+									<button type="button" onclick="importCustomPayloads()" class="flex-1 text-[10px] px-2 py-1 border border-gray-600 text-gray-400 rounded hover:bg-gray-600 transition-all" title="Import payloads">Import</button>
+								</div>
+								<button type="button" onclick="resetAllPayloads()" class="w-full text-[10px] px-2 py-1 border border-cyber-danger/50 text-cyber-danger/70 rounded hover:bg-cyber-danger/20 transition-all" title="Reset all to defaults">Reset All</button>
+							</div>
+							</div>
+							
+							<!-- Right content - Category editor -->
+							<div class="flex-1 flex flex-col overflow-hidden">
+								<div id="configEditorEmpty" class="flex-1 overflow-y-auto p-6">
+									<div class="max-w-lg mx-auto">
+										<!-- Header -->
+										<div class="flex items-center gap-4 mb-6">
+											<div class="w-14 h-14 shrink-0 bg-cyber-accent/10 rounded-2xl flex items-center justify-center">
+												<svg class="w-7 h-7 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+												</svg>
+											</div>
+											<div>
+												<h3 class="text-xl font-bold text-white">Payload Configuration</h3>
+												<p class="text-sm text-gray-400">Customize attack payloads used for WAF testing</p>
+											</div>
+										</div>
+
+										<!-- What are payloads -->
+										<div class="bg-cyber-elevated/50 border border-cyber-accent/20 rounded-xl p-4 mb-4">
+											<h4 class="text-sm font-bold text-cyber-accent mb-2 flex items-center gap-2">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+												What are payloads?
+											</h4>
+											<p class="text-xs text-gray-400 leading-relaxed">
+												Payloads are test strings sent to your application to check if your WAF blocks malicious requests. 
+												Each category (SQL Injection, XSS, etc.) contains specific attack patterns that should be blocked by a properly configured WAF.
+											</p>
+										</div>
+
+										<!-- How to use -->
+										<div class="bg-cyber-elevated/50 border border-cyber-accent/20 rounded-xl p-4 mb-4">
+											<h4 class="text-sm font-bold text-cyber-accent mb-3 flex items-center gap-2">
+												<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+												How to customize
+											</h4>
+											<ul class="text-xs text-gray-400 space-y-2">
+												<li class="flex items-start gap-2">
+													<span class="text-cyber-accent font-bold">1.</span>
+													<span>Select a category from the left sidebar</span>
+												</li>
+												<li class="flex items-start gap-2">
+													<span class="text-cyber-accent font-bold">2.</span>
+													<span>Edit existing payloads directly or click <strong class="text-white">"+ Add Payload"</strong> to add new ones</span>
+												</li>
+												<li class="flex items-start gap-2">
+													<span class="text-cyber-accent font-bold">3.</span>
+													<span>Click the <span class="text-cyber-danger">trash icon</span> to remove a payload</span>
+												</li>
+												<li class="flex items-start gap-2">
+													<span class="text-cyber-accent font-bold">4.</span>
+													<span>Click <strong class="text-white">"Save Changes"</strong> to apply your modifications</span>
+												</li>
+											</ul>
+										</div>
+
+										<!-- Badges explanation -->
+										<div class="bg-cyber-elevated/50 border border-cyber-accent/20 rounded-xl p-4 mb-6">
+											<h4 class="text-sm font-bold text-cyber-accent mb-3">Category badges</h4>
+											<div class="grid grid-cols-2 gap-2 text-xs">
+												<div class="flex items-center gap-2">
+													<span class="px-1.5 py-0.5 bg-gray-600/50 text-gray-400 rounded text-[10px]">42</span>
+													<span class="text-gray-400">Default (unmodified)</span>
+												</div>
+												<div class="flex items-center gap-2">
+													<span class="px-1.5 py-0.5 bg-cyber-warning/20 text-cyber-warning rounded text-[10px]">MOD</span>
+													<span class="text-gray-400">Modified</span>
+												</div>
+												<div class="flex items-center gap-2">
+													<span class="px-1.5 py-0.5 bg-cyber-success/20 text-cyber-success rounded text-[10px]">NEW</span>
+													<span class="text-gray-400">Custom category</span>
+												</div>
+												<div class="flex items-center gap-2">
+													<span class="px-1.5 py-0.5 bg-cyber-danger/20 text-cyber-danger rounded text-[10px]">DEL</span>
+													<span class="text-gray-400">Deleted</span>
+												</div>
+											</div>
+										</div>
+
+										<!-- Import/Export buttons -->
+										<div class="flex gap-3">
+											<button type="button" onclick="exportCustomPayloads()" 
+													class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-cyber-elevated border border-cyber-accent/30 rounded-xl text-cyber-accent hover:bg-cyber-accent/20 transition-all">
+												<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+												<span class="text-sm font-semibold">Export All</span>
+											</button>
+											<button type="button" onclick="importCustomPayloads()" 
+													class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-cyber-elevated border border-cyber-accent/30 rounded-xl text-cyber-accent hover:bg-cyber-accent/20 transition-all">
+												<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+												<span class="text-sm font-semibold">Import</span>
+											</button>
+										</div>
+									</div>
+								</div>
+								<div id="configEditor" class="flex-1 flex flex-col overflow-hidden" style="display: none;">
+									<div class="p-4 border-b border-cyber-accent/20 bg-cyber-elevated/30">
+										<div class="flex items-center justify-between">
+											<div class="flex items-center gap-3">
+												<input type="text" id="configCategoryName" 
+													   class="bg-transparent border-none text-lg font-bold text-white focus:outline-none focus:ring-0 w-auto"
+													   placeholder="Category Name" />
+												<span id="configCategoryBadge" class="px-2 py-0.5 text-xs rounded-full bg-cyber-accent/20 text-cyber-accent">Default</span>
+											</div>
+											<div class="flex items-center gap-2">
+												<button type="button" onclick="resetCategoryToDefault()" id="configResetBtn"
+														class="text-xs px-3 py-1.5 border border-gray-500 text-gray-400 rounded-lg hover:bg-gray-600 transition-all" style="display: none;">
+													Reset to Default
+												</button>
+												<button type="button" onclick="deleteCategory()" id="configDeleteBtn"
+														class="text-xs px-3 py-1.5 border border-cyber-danger text-cyber-danger rounded-lg hover:bg-cyber-danger hover:text-white transition-all">
+													Delete
+												</button>
+											</div>
+										</div>
+									</div>
+									<div class="flex-1 flex flex-col overflow-hidden">
+									<!-- Tabs -->
+									<div class="flex border-b border-cyber-accent/20 bg-cyber-elevated/20">
+										<button type="button" id="tabAttackPayloads" onclick="switchPayloadTab('attack')" 
+												class="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-cyber-accent text-cyber-accent">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+											</svg>
+											Attack Payloads
+											<span id="attackPayloadCount" class="px-1.5 py-0.5 text-[10px] bg-cyber-accent/20 rounded">0</span>
+										</button>
+										<button type="button" id="tabFalsePayloads" onclick="switchPayloadTab('false')" 
+												class="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 border-transparent text-gray-400 hover:text-gray-200">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+											</svg>
+											False Positive
+											<span id="falsePayloadCount" class="px-1.5 py-0.5 text-[10px] bg-blue-500/20 text-blue-400 rounded">0</span>
+										</button>
+									</div>
+									
+									<!-- Attack Payloads Panel -->
+									<div id="panelAttackPayloads" class="flex-1 flex flex-col overflow-hidden p-4">
+										<div class="flex items-center justify-between mb-3">
+											<p class="text-xs text-gray-500">Malicious payloads that should be blocked by WAF</p>
+											<button type="button" onclick="addPayload('attack')" 
+													class="text-xs px-3 py-1.5 bg-cyber-accent/20 text-cyber-accent rounded-lg hover:bg-cyber-accent hover:text-cyber-bg transition-all font-semibold">
+												+ Add Payload
+											</button>
+										</div>
+										<div id="configAttackPayloads" class="flex-1 space-y-2 overflow-y-auto pr-2">
+											<!-- Payloads will be rendered here -->
+										</div>
+									</div>
+									
+									<!-- False Positive Payloads Panel -->
+									<div id="panelFalsePayloads" class="flex-1 flex flex-col overflow-hidden p-4" style="display: none;">
+										<div class="flex items-center justify-between mb-3">
+											<p class="text-xs text-gray-500">Legitimate payloads that should NOT be blocked</p>
+											<button type="button" onclick="addPayload('false')" 
+													class="text-xs px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500 hover:text-white transition-all font-semibold">
+												+ Add Payload
+											</button>
+										</div>
+										<div id="configFalsePayloads" class="flex-1 space-y-2 overflow-y-auto pr-2">
+											<!-- False positive payloads will be rendered here -->
+										</div>
+									</div>
+								</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer bg-cyber-elevated border-t border-cyber-accent/20 rounded-b-xl px-5 py-4 flex justify-between">
+						<div class="text-xs text-gray-500">
+							<span id="configCustomCount">0</span> custom payloads
+						</div>
+						<div class="flex gap-2">
+							<button type="button" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-all text-sm" data-bs-dismiss="modal">Close</button>
+							<button type="button" onclick="saveTestConfig()" class="px-4 py-2 bg-cyber-success text-cyber-bg font-semibold rounded-lg hover:opacity-90 transition-all text-sm">Save Changes</button>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 
+		<!-- Hidden file input for import -->
+		<input type="file" id="importPayloadsInput" accept=".yaml,.yml,.json" style="display: none;" onchange="handlePayloadsImport(event)" />
+
 		<!-- Batch Testing Modal -->
 		<div class="modal fade" id="batchModal" tabindex="-1">
 			<div class="modal-dialog modal-lg">
-				<div class="modal-content">
-					<div class="modal-header">
-						<h5 class="modal-title">🔄 Batch Testing</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				<div class="modal-content bg-cyber-card border border-cyber-accent/20 rounded-xl">
+					<div class="modal-header bg-cyber-elevated border-b border-cyber-accent/20 rounded-t-xl px-5 py-4">
+						<h5 class="modal-title text-cyber-accent font-semibold">Batch Testing</h5>
+						<button type="button" class="btn-close invert" data-bs-dismiss="modal"></button>
 					</div>
-					<div class="modal-body">
-						<div class="mb-3">
-							<label for="batchUrls" class="form-label">URLs to Test (one per line, max 100):</label>
-							<textarea
-								id="batchUrls"
-								class="form-control"
-								rows="8"
-								placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"
-							></textarea>
-							<div class="form-text">Enter HTTP/HTTPS URLs, one per line. Invalid URLs will be ignored.</div>
+					<div class="modal-body text-gray-100 p-5">
+						<div class="mb-4">
+							<label for="batchUrls" class="block text-sm font-medium text-gray-300 mb-2">URLs to Test (one per line, max 100):</label>
+							<textarea id="batchUrls" rows="6"
+									  class="w-full bg-cyber-elevated border border-cyber-accent/20 rounded-lg px-4 py-3 text-sm text-gray-100 font-mono placeholder-gray-500 focus:border-cyber-accent focus:ring-1 focus:ring-cyber-accent/30 outline-none"
+									  placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"></textarea>
+							<p class="text-xs text-gray-500 mt-1">Enter HTTP/HTTPS URLs, one per line. Invalid URLs will be ignored.</p>
 						</div>
-
-						<div class="row">
-							<div class="col-md-6">
-								<div class="mb-3">
-									<label for="batchMaxConcurrent" class="form-label">Max Concurrent Requests:</label>
-									<select id="batchMaxConcurrent" class="form-select">
-										<option value="1">1 (Slow)</option>
-										<option value="2">2</option>
-										<option value="3" selected>3 (Recommended)</option>
-										<option value="5">5 (Fast)</option>
-									</select>
-								</div>
+						<div class="grid grid-cols-2 gap-4 mb-4">
+							<div>
+								<label for="batchMaxConcurrent" class="block text-sm font-medium text-gray-300 mb-2">Max Concurrent Requests:</label>
+								<select id="batchMaxConcurrent" class="w-full bg-cyber-elevated border border-cyber-accent/20 rounded-lg px-3 py-2 text-sm text-gray-100 focus:border-cyber-accent outline-none">
+									<option value="1">1 (Slow)</option>
+									<option value="2">2</option>
+									<option value="3" selected>3 (Recommended)</option>
+									<option value="5">5 (Fast)</option>
+								</select>
 							</div>
-							<div class="col-md-6">
-								<div class="mb-3">
-									<label for="batchDelay" class="form-label">Delay Between Requests (ms):</label>
-									<select id="batchDelay" class="form-select">
-										<option value="0">0 (No delay)</option>
-										<option value="500">500</option>
-										<option value="1000" selected>1000 (Recommended)</option>
-										<option value="2000">2000</option>
-										<option value="5000">5000 (Very slow)</option>
-									</select>
-									<div class="form-text">Client-side delay to avoid overwhelming target servers</div>
-								</div>
+							<div>
+								<label for="batchDelay" class="block text-sm font-medium text-gray-300 mb-2">Delay Between Requests (ms):</label>
+								<select id="batchDelay" class="w-full bg-cyber-elevated border border-cyber-accent/20 rounded-lg px-3 py-2 text-sm text-gray-100 focus:border-cyber-accent outline-none">
+									<option value="0">0 (No delay)</option>
+									<option value="500">500</option>
+									<option value="1000" selected>1000 (Recommended)</option>
+									<option value="2000">2000</option>
+									<option value="5000">5000 (Very slow)</option>
+								</select>
 							</div>
 						</div>
-
-						<div class="mb-3">
-							<div class="form-check">
-								<input class="form-check-input" type="checkbox" id="batchInheritSettings" />
-								<label class="form-check-label" for="batchInheritSettings">
-									Use current test settings (methods, categories, advanced options)
-								</label>
-							</div>
-						</div>
-
-						<div id="batchProgress" style="display: none">
+						<label class="flex items-center gap-2 cursor-pointer mb-4">
+							<input type="checkbox" id="batchInheritSettings" class="w-4 h-4 accent-cyber-accent" />
+							<span class="text-sm text-gray-400">Use current test settings (methods, categories, advanced options)</span>
+						</label>
+						<div id="batchProgress" style="display: none;">
 							<div class="mb-3">
-								<div class="d-flex justify-content-between mb-1">
-									<small class="text-muted">Progress</small>
-									<small class="text-muted" id="batchProgressText">0%</small>
+								<div class="flex justify-between text-xs text-gray-400 mb-1">
+									<span>Progress</span>
+									<span id="batchProgressText">0%</span>
 								</div>
-								<div class="progress">
-									<div id="batchProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+								<div class="h-2 bg-cyber-elevated rounded-full overflow-hidden">
+									<div id="batchProgressBar" class="h-full bg-gradient-to-r from-cyber-accent to-cyber-success transition-all" style="width: 0%"></div>
 								</div>
 							</div>
-							<div class="mb-2">
-								<small class="text-muted">Current URL: <span id="batchCurrentUrl">-</span></small>
-							</div>
-							<div class="mb-2">
-								<small class="text-muted"
-									>Completed: <span id="batchCompleted">0</span> / <span id="batchTotal">0</span></small
-								>
-							</div>
-							<div class="mb-2">
-								<small class="text-muted">Estimated time remaining: <span id="batchETA">-</span></small>
-							</div>
+							<p class="text-xs text-gray-400">Current URL: <span id="batchCurrentUrl">-</span></p>
+							<p class="text-xs text-gray-400">Completed: <span id="batchCompleted">0</span> / <span id="batchTotal">0</span></p>
+							<p class="text-xs text-gray-400">Estimated time remaining: <span id="batchETA">-</span></p>
 						</div>
-
-						<div id="batchResults" style="display: none">
-							<h6>Batch Results Summary</h6>
+						<div id="batchResults" style="display: none;">
+							<h6 class="text-sm font-semibold text-gray-200 mb-2">Batch Results Summary</h6>
 							<div id="batchSummary"></div>
 						</div>
 					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						<button type="button" id="startBatchBtn" class="btn btn-success" onclick="startBatchTest()">
-							▶️ Start Batch Test
-						</button>
-						<button type="button" id="stopBatchBtn" class="btn btn-danger" style="display: none" onclick="stopBatchTest()">
-							⏹️ Stop Test
-						</button>
-						<button
-							type="button"
-							id="exportBatchBtn"
-							class="btn btn-outline-primary"
-							style="display: none"
-							onclick="exportBatchResults()"
-						>
-							📊 Export Results
-						</button>
+					<div class="modal-footer bg-cyber-elevated border-t border-cyber-accent/20 rounded-b-xl px-5 py-4 flex gap-2">
+						<button type="button" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-all text-sm" data-bs-dismiss="modal">Close</button>
+						<button type="button" id="startBatchBtn" onclick="startBatchTest()" class="px-4 py-2 bg-cyber-success text-cyber-bg font-semibold rounded-lg hover:opacity-90 transition-all text-sm">Start Batch Test</button>
+						<button type="button" id="stopBatchBtn" onclick="stopBatchTest()" class="px-4 py-2 bg-cyber-danger text-white font-semibold rounded-lg hover:opacity-90 transition-all text-sm" style="display: none;">Stop Test</button>
+						<button type="button" id="exportBatchBtn" onclick="exportBatchResults()" class="px-4 py-2 border border-cyber-accent text-cyber-accent rounded-lg hover:bg-cyber-accent hover:text-cyber-bg transition-all text-sm" style="display: none;">Export Results</button>
 					</div>
 				</div>
 			</div>
 		</div>
 
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 		<script src="main.js"></script>
-		<footer class="text-center mt-5 mb-3">
-			<small>Read my blog at <a href="https://yoursec.substack.com/" target="_blank" rel="noopener">yoursec.substack.com</a></small>
+		
+		<!-- Footer -->
+		<!-- Custom Alert Modal -->
+		<div id="customAlertModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4" style="display: none;">
+			<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAlert()"></div>
+			<div class="relative bg-cyber-card border border-cyber-accent/30 rounded-xl shadow-2xl shadow-black/50 w-full max-w-md animate-modal-in">
+				<div class="flex items-center gap-3 p-4 border-b border-cyber-accent/20">
+					<div id="alertIcon" class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyber-accent/20">
+						<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+						</svg>
+					</div>
+					<h3 id="alertTitle" class="text-lg font-bold text-white">Information</h3>
+				</div>
+				<div class="p-4">
+					<p id="alertMessage" class="text-sm text-gray-300 whitespace-pre-wrap"></p>
+				</div>
+				<div class="flex justify-end gap-2 p-4 border-t border-cyber-accent/20 bg-cyber-elevated/30 rounded-b-xl">
+					<button type="button" onclick="closeAlert()" class="px-4 py-2 bg-cyber-accent text-cyber-bg font-semibold rounded-lg hover:opacity-90 transition-all text-sm">
+						OK
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Custom Confirm Modal -->
+		<div id="customConfirmModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4" style="display: none;">
+			<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeConfirm(false)"></div>
+			<div class="relative bg-cyber-card border border-cyber-accent/30 rounded-xl shadow-2xl shadow-black/50 w-full max-w-md animate-modal-in">
+				<div class="flex items-center gap-3 p-4 border-b border-cyber-accent/20">
+					<div id="confirmIcon" class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyber-warning/20">
+						<svg class="w-5 h-5 text-cyber-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+						</svg>
+					</div>
+					<h3 id="confirmTitle" class="text-lg font-bold text-white">Confirm</h3>
+				</div>
+				<div class="p-4">
+					<p id="confirmMessage" class="text-sm text-gray-300 whitespace-pre-wrap"></p>
+				</div>
+				<div class="flex justify-end gap-2 p-4 border-t border-cyber-accent/20 bg-cyber-elevated/30 rounded-b-xl">
+					<button type="button" onclick="closeConfirm(false)" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-all text-sm">
+						Cancel
+					</button>
+					<button type="button" onclick="closeConfirm(true)" id="confirmOkBtn" class="px-4 py-2 bg-cyber-accent text-cyber-bg font-semibold rounded-lg hover:opacity-90 transition-all text-sm">
+						OK
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- HTTP Status Codes Modal -->
+		<div id="httpCodesModal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4" style="display: none;">
+			<div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeHttpCodesModal()"></div>
+			<div class="relative bg-cyber-card border border-cyber-accent/30 rounded-xl shadow-2xl shadow-black/50 w-full max-w-4xl max-h-[90vh] overflow-hidden animate-modal-in flex flex-col">
+				<div class="flex items-center justify-between p-4 border-b border-cyber-accent/20">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 rounded-lg flex items-center justify-center bg-cyber-accent/20">
+							<svg class="w-5 h-5 text-cyber-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+							</svg>
+						</div>
+						<h3 id="httpCodesTitle" class="text-lg font-bold text-white">HTTP Status Codes Reference</h3>
+					</div>
+					<button type="button" onclick="closeHttpCodesModal()" class="text-gray-400 hover:text-white transition-colors">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+						</svg>
+					</button>
+				</div>
+				<div class="flex-1 overflow-y-auto p-4">
+					<div id="httpCodesTableContent" class="overflow-x-auto"></div>
+				</div>
+				<div class="flex justify-end gap-2 p-4 border-t border-cyber-accent/20 bg-cyber-elevated/30">
+					<button type="button" onclick="closeHttpCodesModal()" class="px-4 py-2 bg-cyber-accent text-cyber-bg font-semibold rounded-lg hover:opacity-90 transition-all text-sm">
+						Close
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<footer class="h-10 bg-cyber-card border-t border-cyber-accent/20 flex items-center justify-center text-xs text-gray-500 shrink-0 z-50">
+			<span>WAF-CHECKER.COM by <a href="https://mickaelasseline.com" target="_blank" rel="noopener" class="text-cyber-accent hover:text-cyber-success transition-colors">Mickael Asseline</a></span>
+			<span class="mx-2 text-gray-600">|</span>
+			<span>Fork of <a href="https://github.com/SecH0us3/waf-checker" target="_blank" rel="noopener" class="text-cyber-accent hover:text-cyber-success transition-colors">SecH0us3/waf-checker</a></span>
 		</footer>
 	</body>
 </html>
