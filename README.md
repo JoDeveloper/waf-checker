@@ -10,10 +10,12 @@
 </p>
 <div align="center">
 A powerful web application to test how well your **Web Application Firewall (WAF)** protects against common attack vectors.
+
+→ [waf-checker.com](https://waf-checker.com) ←
 </div>
 
 
-→ [waf-checker.com](https://waf-checker.com) ←
+
 
 
 ![WAF Checker - Main Interface](./img/1-main.png)
