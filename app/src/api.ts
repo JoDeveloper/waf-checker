@@ -8,6 +8,7 @@ import {
 	generateEncodedPayloads,
 } from './advanced-payloads';
 import { HTTPManipulator, ManipulatedRequest, HTTPManipulationOptions } from './http-manipulation';
+import { validateUrl, createValidationErrorResponse } from './url-validation';
 
 // =============================================
 // RATE LIMITER (in-memory, per-IP)
@@ -262,6 +263,17 @@ export default {
 		if (urlObj.pathname === '/api/check') {
 			const url = urlObj.searchParams.get('url');
 			if (!url) return new Response('Missing url param', { status: 400 });
+			
+			// Validate URL to prevent SSRF attacks
+			const urlValidation = validateUrl(url);
+			if (!urlValidation.valid) {
+				return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+					status: 400,
+					headers: { 'content-type': 'application/json; charset=UTF-8' }
+				});
+			}
+			const validatedUrl = urlValidation.normalizedUrl!;
+			
 			if (url.includes('secmy')) {
 				return new Response(JSON.stringify([]), { headers: { 'content-type': 'application/json; charset=UTF-8' } });
 			}
@@ -425,11 +437,12 @@ export default {
 				return apiJsonResponse({ error: 'Missing required parameter: url', example: `${urlObj.origin}${urlObj.pathname}?url=https://example.com` }, 400, rlHeaders);
 			}
 
-			// Normalize target URL
-			let normalizedTarget = target;
-			if (!normalizedTarget.startsWith('http://') && !normalizedTarget.startsWith('https://')) {
-				normalizedTarget = 'https://' + normalizedTarget;
+			// Validate URL to prevent SSRF attacks
+			const urlValidation = validateUrl(target);
+			if (!urlValidation.valid) {
+				return apiJsonResponse(createValidationErrorResponse(urlValidation), 400, rlHeaders);
 			}
+			const normalizedTarget = urlValidation.normalizedUrl!;
 
 			try {
 				// --- WAF Checker: full payload test with all advanced options ---
@@ -653,6 +666,21 @@ async function handleApiCheckStream(request: Request): Promise<Response> {
 	const urlObj = new URL(request.url);
 	let url = urlObj.searchParams.get('url');
 	if (!url) return new Response('Missing url param', { status: 400 });
+	
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(url);
+	if (!urlValidation.valid) {
+		return new Response(`data: ${JSON.stringify({ type: 'error', message: urlValidation.error })}\n\n`, {
+			status: 400,
+			headers: {
+				'content-type': 'text/event-stream',
+				'cache-control': 'no-cache',
+				'connection': 'keep-alive',
+			},
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+	
 	if (url.includes('secmy')) {
 		return new Response('data: {"type":"complete","results":[]}\n\n', {
 			headers: {
@@ -1245,6 +1273,16 @@ async function handleHTTPManipulation(request: Request): Promise<Response> {
 			headers: { 'content-type': 'application/json; charset=UTF-8' },
 		});
 	}
+	
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400,
+			headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
 
 	try {
 		const testPayload = 'test_payload';
@@ -1497,16 +1535,12 @@ async function handleBatchStart(request: Request): Promise<Response> {
 		const invalidUrls: string[] = [];
 
 		for (const url of urls) {
-			try {
-				const urlObj = new URL(url);
-				// Check if protocol is HTTP or HTTPS
-				if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
-					invalidUrls.push(`${url} (unsupported protocol: ${urlObj.protocol})`);
-				} else {
-					validUrls.push(url);
-				}
-			} catch {
-				invalidUrls.push(`${url} (invalid URL format)`);
+			// Validate URL to prevent SSRF attacks
+			const urlValidation = validateUrl(url);
+			if (!urlValidation.valid) {
+				invalidUrls.push(`${url} (${urlValidation.error})`);
+			} else {
+				validUrls.push(urlValidation.normalizedUrl!);
 			}
 		}
 
@@ -1909,20 +1943,18 @@ async function handleSecurityHeaders(request: Request): Promise<Response> {
 		});
 	}
 
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400,
+			headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+
 	try {
-		// Validate URL
-		let parsedUrl: URL;
-		try {
-			parsedUrl = new URL(targetUrl);
-			if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-				throw new Error('Invalid protocol');
-			}
-		} catch {
-			return new Response(JSON.stringify({ error: 'Invalid URL format' }), {
-				status: 400,
-				headers: { 'content-type': 'application/json; charset=UTF-8' },
-			});
-		}
+		const parsedUrl = new URL(validatedUrl);
 
 		const startTime = Date.now();
 		const resp = await fetch(targetUrl, {
@@ -2139,9 +2171,19 @@ async function handleDNSRecon(request: Request): Promise<Response> {
 		});
 	}
 
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400,
+			headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+
 	let hostname: string;
 	try {
-		hostname = new URL(targetUrl).hostname;
+		hostname = new URL(validatedUrl).hostname;
 	} catch {
 		return new Response(JSON.stringify({ error: 'Invalid URL' }), {
 			status: 400,
@@ -3125,10 +3167,18 @@ async function handleFullRecon(request: Request): Promise<Response> {
 		});
 	}
 
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+
 	let parsedTarget: URL;
 	try {
-		parsedTarget = new URL(targetUrl);
-		if (parsedTarget.protocol !== 'http:' && parsedTarget.protocol !== 'https:') throw new Error('Invalid protocol');
+		parsedTarget = new URL(validatedUrl);
 	} catch {
 		return new Response(JSON.stringify({ error: 'Invalid URL' }), {
 			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
@@ -3884,10 +3934,18 @@ async function handleSpeedTest(request: Request): Promise<Response> {
 		});
 	}
 
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+
 	let parsedTarget: URL;
 	try {
-		parsedTarget = new URL(targetUrl);
-		if (parsedTarget.protocol !== 'http:' && parsedTarget.protocol !== 'https:') throw new Error('Invalid protocol');
+		parsedTarget = new URL(validatedUrl);
 	} catch {
 		return new Response(JSON.stringify({ error: 'Invalid URL' }), {
 			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
@@ -4393,10 +4451,18 @@ async function handleSEOAudit(request: Request): Promise<Response> {
 		});
 	}
 
+	// Validate URL to prevent SSRF attacks
+	const urlValidation = validateUrl(targetUrl);
+	if (!urlValidation.valid) {
+		return new Response(JSON.stringify(createValidationErrorResponse(urlValidation)), {
+			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
+		});
+	}
+	const validatedUrl = urlValidation.normalizedUrl!;
+
 	let parsedTarget: URL;
 	try {
-		parsedTarget = new URL(targetUrl);
-		if (parsedTarget.protocol !== 'http:' && parsedTarget.protocol !== 'https:') throw new Error('Invalid protocol');
+		parsedTarget = new URL(validatedUrl);
 	} catch {
 		return new Response(JSON.stringify({ error: 'Invalid URL' }), {
 			status: 400, headers: { 'content-type': 'application/json; charset=UTF-8' },
